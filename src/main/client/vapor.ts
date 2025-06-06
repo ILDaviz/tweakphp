@@ -33,12 +33,12 @@ export class VaporClient extends BaseClient {
       const { stdout, stderr } = await execAsync(command, { cwd: clientPath })
 
       if (stderr) {
-        return `Errore: ${stderr}`
+        return `Error: ${stderr}`
       }
 
       return stdout
     } catch (err) {
-      return `Eccezione: ${(err as Error).message}`
+      return `Exception: ${(err as Error).message}`
     }
   }
 
