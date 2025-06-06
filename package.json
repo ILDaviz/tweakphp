@@ -1,6 +1,7 @@
 {
   "name": "tweakphp",
   "description": "Tweak your PHP code",
+  "private": false,
   "author": {
     "name": "Saeed Vaziry",
     "email": "mr.saeedvaziry@gmail.com"
