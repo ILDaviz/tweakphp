@@ -7,18 +7,34 @@
   import VerticalSplitIcon from './icons/VerticalSplitIcon.vue'
   import { useSettingsStore } from '../stores/settings'
   import { useExecuteStore } from '../stores/execute'
+  import { useVaporStore } from '../stores/vapor'
   import Toolbar from './Toolbar.vue'
   import { useTabsStore } from '../stores/tabs'
   import SecondaryButton from './SecondaryButton.vue'
-  import { computed, ComputedRef } from 'vue'
+  import { computed, ComputedRef, watch } from 'vue'
   import { Tab } from '../../types/tab.type'
 
   const settingsStore = useSettingsStore()
   const executeStore = useExecuteStore()
   const tabStore = useTabsStore()
+  const vaporStore = useVaporStore()
   const route = useRoute()
   const platform = window.platformInfo.getPlatform()
   const tab: ComputedRef<Tab | null> = computed(() => tabStore.getCurrent())
+
+  const showOutputType = computed(() => {
+    return tab.value?.execution !== 'vapor'
+  })
+
+  watch(
+    () => tab.value?.execution,
+    value => {
+      if (value === 'vapor') {
+        settingsStore.settings.output = 'code'
+        settingsStore.update()
+      }
+    }
+  )
 
   const execute = () => {
     if (route.name !== 'code') {
@@ -36,6 +52,11 @@
   const updateOutput = (output: 'code' | 'stack') => {
     settingsStore.settings.output = output
     settingsStore.update()
+  }
+
+  const removeTab = (id: number) => {
+    tabStore.removeTab(id)
+    vaporStore.removeVaporConfig(id)
   }
 </script>
 
@@ -75,6 +96,7 @@
             />
           </SecondaryButton>
           <SecondaryButton
+            v-if="showOutputType"
             class="!px-2"
             v-tippy="{ content: 'Output Style', placement: 'bottom' }"
             @click="updateOutput(settingsStore.settings.output === 'stack' ? 'code' : 'stack')"
@@ -101,7 +123,7 @@
             v-if="tab"
             class="!px-2"
             v-tippy="{ content: 'Close', placement: 'bottom' }"
-            @click="tabStore.removeTab(tab.id)"
+            @click="removeTab(tab.id)"
           >
             <XMarkIcon class="size-4" />
           </SecondaryButton>

@@ -2,6 +2,7 @@
   import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
   import { useExecuteStore } from '../stores/execute'
   import { useTabsStore } from '../stores/tabs'
+  import { useVaporStore } from '../stores/vapor.ts'
   import Container from '../components/Container.vue'
   import events from '../events'
   import { useSettingsStore } from '../stores/settings'
@@ -17,6 +18,7 @@
 
   const settingsStore = useSettingsStore()
   const executeStore = useExecuteStore()
+  const vaporStore = useVaporStore()
   const tabsStore = useTabsStore()
   const codeEditor = ref(null)
   const resultEditor = ref<InstanceType<typeof Editor> | null>(null)
@@ -48,6 +50,30 @@
     const output = [...tab.value.result].reverse().find(item => item.output.trim() !== '')
     return output ? output.output : ''
   })
+
+  const vaporRequestEnvironmentTab = () => {
+    if (!tabsStore.current?.id || !tabsStore.current?.path) {
+      console.warn('No current tab or path set, cannot request environments.')
+      return
+    }
+    vaporStore.setClientPath(tab.value.id, String(tabsStore.current?.path))
+    const config = JSON.parse(JSON.stringify(vaporStore.getConnectionConfig(tabsStore.current?.id)))
+    window.ipcRenderer.send('client.action', {
+      type: 'getEnvironments',
+      connection: config,
+    })
+  }
+
+  const vaporResponseEnvironmentTab = (e: any) => {
+    if (!tabsStore.current?.id) {
+      console.warn('No current tab or path set, cannot request environments.')
+      return
+    }
+    const reply = e.detail
+    if (reply.type === 'getEnvironments') {
+      vaporStore.setEnviroments(tabsStore.current?.id, e.detail.result)
+    }
+  }
 
   const keydownListener = (event: any) => {
     if ((event.metaKey || event.ctrlKey) && !event.shiftKey) {
@@ -106,6 +132,7 @@
   }
 
   const getInfo = () => {
+    vaporRequestEnvironmentTab()
     let connection = tabsStore.getConnectionConfig(tab.value)
     const { loader } = tab.value
     const loaderCode = getLoader(loader ?? '')
@@ -169,6 +196,7 @@
     events.addEventListener('execute', executeHandler)
     events.addEventListener('client.execute.reply', executeReplyListener)
     events.addEventListener('client.info.reply', infoReplyListener)
+    events.addEventListener('client.action.reply', vaporResponseEnvironmentTab)
     if (tabsContainer.value) {
       tabsContainer.value.scrollLeft = tabsStore.scrollPosition
       tabsContainer.value.addEventListener('wheel', tabsContainerWheelListener)
@@ -179,6 +207,7 @@
     window.removeEventListener('keydown', keydownListener)
     events.removeEventListener('client.execute.reply', executeReplyListener)
     events.removeEventListener('client.info.reply', infoReplyListener)
+    events.removeEventListener('client.action.reply', vaporResponseEnvironmentTab)
     events.removeEventListener('execute', executeHandler)
     if (tabsContainer.value) {
       tabsContainer.value.removeEventListener('wheel', tabsContainerWheelListener)

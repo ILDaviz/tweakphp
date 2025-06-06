@@ -3,6 +3,7 @@
   import SecondaryButton from './SecondaryButton.vue'
   import DockerIcon from './icons/DockerIcon.vue'
   import KubectlIcon from './icons/KubectlIcon.vue'
+  import VaporIcon from './icons/VaporIcon.vue'
   import { useTabsStore } from '../stores/tabs'
   import DropDown from './DropDown.vue'
   import DropDownItem from './DropDownItem.vue'
@@ -20,6 +21,7 @@
   import KubectlView from '../views/KubectlView.vue'
   import { ConnectReply } from '../../types/client.type'
   import { useLodaersStore } from '../stores/loaders'
+  import { useVaporStore } from '../stores/vapor.ts'
   import Divider from './Divider.vue'
   import { useRouter } from 'vue-router'
 
@@ -28,6 +30,7 @@
   const sshStore = useSSHStore()
   const kubectlStore = useKubectlStore()
   const loadersStore = useLodaersStore()
+  const vaporStore = useVaporStore()
   const router = useRouter()
   const dockerModal = ref()
   const sshModal = ref()
@@ -49,6 +52,11 @@
     if (!tabStore.current) {
       return
     }
+
+    if (execution !== 'vapor') {
+      vaporStore.removeEnvironment(tabStore.current.id)
+    }
+
     connecting.value = execution
     let connection = tabStore.getConnectionConfig(tabStore.current, execution)
     window.ipcRenderer.send('client.connect', {
@@ -100,6 +108,34 @@
       tabStore.current.ssh = undefined
       tabStore.updateTab(tabStore.current)
     }
+  }
+
+  const vaporConfig = computed(() => vaporStore.getConnectionConfig(tabStore?.current?.id))
+
+  const vaporConnected = (environment: string) => {
+    if (!tabStore.current) {
+      return
+    }
+
+    tabStore.current.execution = 'vapor'
+    tabStore.updateTab(tabStore.current)
+    if (tab.value?.id) {
+      vaporStore.setEnvironment(tabStore.current.id, environment)
+    }
+  }
+
+  const vaporRemoved = () => {
+    if (!tabStore.current) {
+      return
+    }
+
+    tabStore.current.execution = 'local'
+    vaporStore.removeEnvironment(tabStore.current.id)
+    tabStore.updateTab(tabStore.current)
+  }
+
+  function capitalize(str: string) {
+    return str.charAt(0).toUpperCase() + str.slice(1)
   }
 
   const kubectlConnected = (config: KubectlConnectionConfig) => {
@@ -184,6 +220,30 @@
             {{ tabStore.getCurrent()?.docker?.container_name }}
           </DropDownItem>
           <DropDownItem @click="dockerModal.openModal()"> Connect </DropDownItem>
+        </div>
+      </DropDown>
+
+      <!-- vapor -->
+      <DropDown v-if="vaporConfig?.environments?.length">
+        <template v-slot:trigger>
+          <SecondaryButton class="!px-2">
+            <VaporIcon class="size-4 mr-1" />
+            <span class="text-xs max-w-[150px] truncate flex items-center gap-2">
+              <span v-if="vaporConfig?.environment" class="font-bold text-red-500">
+                {{ capitalize(vaporConfig.environment) }}
+              </span>
+              <span v-else>Vapor</span>
+            </span>
+            <ChevronDownIcon class="size-4 ml-1" />
+          </SecondaryButton>
+        </template>
+        <div>
+          <template v-for="env in vaporConfig?.environments" :key="env">
+            <DropDownItem v-if="vaporConfig?.environment !== env" @click="vaporConnected(env)" class="truncate">
+              {{ capitalize(env) }}
+            </DropDownItem>
+          </template>
+          <DropDownItem v-if="vaporConfig?.environment" @click="vaporRemoved()"> Disconnect </DropDownItem>
         </div>
       </DropDown>
 

@@ -2,6 +2,7 @@ import { ipcMain, Notification } from 'electron'
 import { LocalClient } from './local'
 import { SSHClient } from './ssh'
 import { Client } from './client.interface'
+import { VaporClient } from './vapor'
 import DockerClient from './docker'
 import KubectlClient from './kubectl'
 
@@ -105,6 +106,10 @@ const getClient = (data: any): Client => {
 
   if (data.connection.type === 'docker') {
     return new DockerClient(data.connection)
+  }
+
+  if (data.connection.type === 'vapor') {
+    return new VaporClient(data.connection)
   }
 
   if (data.connection.type === 'ssh') {

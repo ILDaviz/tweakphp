@@ -1,7 +1,6 @@
 {
   "name": "tweakphp",
   "description": "Tweak your PHP code",
-  "private": false,
   "author": {
     "name": "Saeed Vaziry",
     "email": "mr.saeedvaziry@gmail.com"
@@ -119,6 +118,7 @@
     "@heroicons/vue": "^2.1.3",
     "@types/adm-zip": "^0.5.7",
     "@types/express": "^5.0.0",
+    "@types/js-yaml": "^4.0.9",
     "@types/node": "^22.10.2",
     "@types/node-fetch": "^2.6.12",
     "@types/semver": "^7.5.8",
@@ -166,5 +166,8 @@
     "vue-tippy": "^6.4.4",
     "vue-tsc": "^2.0.26",
     "ws": "^8.17.0"
+  },
+  "dependencies": {
+    "js-yaml": "^4.1.0"
   }
 }

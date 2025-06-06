@@ -4,11 +4,14 @@ import { Tab, Result } from '../../types/tab.type'
 import router from '../router'
 import { ConnectionConfig as LocalConnectionConfig } from '../../types/local.type'
 import { ConnectionConfig as SSHConnectionConfig } from '../../types/ssh.type'
+import { ConnectionConfig as VaporConnectionConfig } from '../../types/vapor.type'
 import { ConnectionConfig as DockerConnectionConfig } from '../../types/docker.type'
 import { ConnectionConfig as KubectlConnectionConfig } from '../../types/kubectl.type'
 import { useSettingsStore } from './settings'
 import { useSSHStore } from './ssh'
 import { useKubectlStore } from './kubectl'
+import { useVaporStore } from './vapor.ts'
+import { log } from 'node:console'
 
 export const useTabsStore = defineStore('tabs', () => {
   // setup tabs
@@ -27,6 +30,7 @@ export const useTabsStore = defineStore('tabs', () => {
   const settingsStore = useSettingsStore()
   const sshStore = useSSHStore()
   const kubectlStore = useKubectlStore()
+  const vaporStore = useVaporStore()
 
   const setCurrent = (tab: Tab | null): void => {
     current.value = tab
@@ -124,6 +128,7 @@ export const useTabsStore = defineStore('tabs', () => {
     let connection:
       | LocalConnectionConfig
       | SSHConnectionConfig
+      | VaporConnectionConfig
       | DockerConnectionConfig
       | KubectlConnectionConfig
       | undefined
@@ -145,6 +150,10 @@ export const useTabsStore = defineStore('tabs', () => {
       if (tab.docker.ssh_id) {
         connection.ssh = sshStore.getConnection(tab.docker.ssh_id)
       }
+    }
+
+    if (execution === 'vapor') {
+      connection = vaporStore.getConnectionConfig(tab.id)
     }
 
     if (execution === 'ssh' && tab.ssh) {
@@ -189,7 +198,7 @@ const normalize = (tab: any): Tab => {
     type: tab.type as string,
     code: (tab.code as string) ?? '',
     path: tab.path as string | undefined,
-    execution: (tab.execution as 'local' | 'ssh' | 'docker' | 'kubectl') ?? 'local',
+    execution: (tab.execution as 'local' | 'ssh' | 'vapor' | 'docker' | 'kubectl') ?? 'local',
     loader: tab.loader as string,
     result: isResultArray(tab.result) ? tab.result : [{ line: 0, code: '', output: tab.result }],
     pane: {
