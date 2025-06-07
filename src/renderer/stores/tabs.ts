@@ -11,7 +11,6 @@ import { useSettingsStore } from './settings'
 import { useSSHStore } from './ssh'
 import { useKubectlStore } from './kubectl'
 import { useVaporStore } from './vapor.ts'
-import { log } from 'node:console'
 
 export const useTabsStore = defineStore('tabs', () => {
   // setup tabs
