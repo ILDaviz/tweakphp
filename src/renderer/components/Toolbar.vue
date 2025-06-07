@@ -224,12 +224,15 @@
       </DropDown>
 
       <!-- vapor -->
-      <DropDown v-if="vaporConfig?.environments?.length">
+      <DropDown>
         <template v-slot:trigger>
           <SecondaryButton class="!px-2">
-            <VaporIcon class="size-4 mr-1" />
+            <VaporIcon
+              class="size-4 mr-1"
+              :class="{ '!text-[#25C4F2]': tabStore.getCurrent()?.execution === 'vapor' }"
+            />
             <span class="text-xs max-w-[150px] truncate flex items-center gap-2">
-              <span v-if="vaporConfig?.environment" class="font-bold text-red-500">
+              <span v-if="vaporConfig?.environment">
                 {{ capitalize(vaporConfig.environment) }}
               </span>
               <span v-else>Vapor</span>
