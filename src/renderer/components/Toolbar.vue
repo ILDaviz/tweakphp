@@ -246,6 +246,9 @@
               {{ capitalize(env) }}
             </DropDownItem>
           </template>
+          <DropDownItem v-if="vaporConfig?.environments.length == 0">
+            <span>No environments found</span>
+          </DropDownItem>
           <DropDownItem v-if="vaporConfig?.environment" @click="vaporRemoved()"> Disconnect </DropDownItem>
         </div>
       </DropDown>
