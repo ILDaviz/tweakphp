@@ -12,6 +12,9 @@ import * as updater from './system/updater.ts'
 import * as link from './system/link.ts'
 import * as tray from './system/tray.ts'
 
+import * as History from './system/code_history.ts'
+import * as Snippet from './system/snippets.ts'
+
 import url from 'url'
 
 import { fixPath } from './utils/fix-path.ts'
@@ -120,3 +123,6 @@ app.on('window-all-closed', () => {
 app.on('before-quit', async () => {
   await lsp.shutdown()
 })
+
+Snippet.setupSnippet()
+History.setupHistory()

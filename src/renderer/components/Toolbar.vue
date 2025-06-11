@@ -24,6 +24,10 @@
   import { useVaporStore } from '../stores/vapor.ts'
   import Divider from './Divider.vue'
   import { useRouter } from 'vue-router'
+  import SnippetIcon from './icons/SnippetIcon.vue'
+  import ClockIcon from './icons/ClockIcon.vue'
+  import SnippetSaveView from '../views/SnippetSaveView.vue'
+  import SnippetHistoryView from '../views/SnippetHistoryView.vue'
 
   const tabStore = useTabsStore()
   const settingsStore = useSettingsStore()
@@ -33,6 +37,9 @@
   const vaporStore = useVaporStore()
   const router = useRouter()
   const dockerModal = ref()
+  const snippetSaveModal = ref()
+  const snippetHistoryModal = ref()
+  const historyModal = ref()
   const sshModal = ref()
   const kubectlModal = ref()
   const tab: ComputedRef<Tab | null> = computed(() => tabStore.getCurrent())
@@ -367,6 +374,35 @@
       </div>
     </DropDown>
 
+    <!-- snippet -->
+    <DropDown>
+      <template v-slot:trigger>
+        <SecondaryButton class="!px-2">
+          <SnippetIcon class="size-4 mr-1" />
+          <span class="text-xs max-w-[150px] truncate flex items-center gap-2">
+            <span>Snippets</span>
+          </span>
+          <ChevronDownIcon class="size-4 ml-1" />
+        </SecondaryButton>
+      </template>
+      <div>
+        <DropDownItem @click="snippetSaveModal.openModal()">
+          <span>Save</span>
+        </DropDownItem>
+        <DropDownItem @click="snippetHistoryModal.openModal()">
+          <span>Show</span>
+        </DropDownItem>
+      </div>
+    </DropDown>
+
+    <!-- history -->
+    <SecondaryButton class="!px-2" @click="historyModal.openModal()">
+      <ClockIcon class="size-4 mr-1" />
+      <span class="text-xs max-w-[150px] truncate flex items-center gap-2">
+        <span>History</span>
+      </span>
+    </SecondaryButton>
+
     <!-- other tools -->
 
     <!-- modals -->
@@ -379,5 +415,12 @@
     <Modal title="Connect to Kubernetes" ref="kubectlModal" size="2xl">
       <KubectlView @connected="kubectlConnected($event)" @removed="kubectlRemoved($event)" />
     </Modal>
+    <Modal title="Snippets" ref="snippetSaveModal" size="xl">
+      <SnippetSaveView @saved="snippetSaveModal.closeModal()" />
+    </Modal>
+    <Modal title="Snippet History" ref="snippetHistoryModal" size="5xl">
+      <SnippetHistoryView @saved="snippetHistoryModal.closeModal()" />
+    </Modal>
+    <Modal title="History" ref="historyModal" size="5xl"> // </Modal>
   </div>
 </template>
