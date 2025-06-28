@@ -8,7 +8,7 @@
   import DropDown from './DropDown.vue'
   import DropDownItem from './DropDownItem.vue'
   import Modal from './Modal.vue'
-  import { computed, ComputedRef, onBeforeUnmount, onMounted, ref } from 'vue'
+  import { computed, ComputedRef, onBeforeUnmount, onMounted, ref, watch } from 'vue'
   import DockerView from '../views/DockerView.vue'
   import { useSettingsStore } from '../stores/settings'
   import { Tab } from '../../types/tab.type'
@@ -22,8 +22,13 @@
   import { ConnectReply } from '../../types/client.type'
   import { useLodaersStore } from '../stores/loaders'
   import { useVaporStore } from '../stores/vapor.ts'
+  import { useSnippetStore } from '../stores/snippet'
+
   import Divider from './Divider.vue'
   import { useRouter } from 'vue-router'
+  import SnippetSaveView from '../views/SnippetSaveView.vue'
+  import SnippetHistoryView from '../views/SnippetHistoryView.vue'
+  import BookmarkIcon from '@/components/icons/BookmarkIcon.vue'
 
   const tabStore = useTabsStore()
   const settingsStore = useSettingsStore()
@@ -31,14 +36,33 @@
   const kubectlStore = useKubectlStore()
   const loadersStore = useLodaersStore()
   const vaporStore = useVaporStore()
+  const snippetStore = useSnippetStore()
   const router = useRouter()
   const dockerModal = ref()
+  const snippetSaveModal = ref()
+  const snippetHistoryModal = ref()
+  const historyModal = ref()
   const sshModal = ref()
   const kubectlModal = ref()
   const tab: ComputedRef<Tab | null> = computed(() => tabStore.getCurrent())
   const sshConnecting = ref(false)
   const kubectlConnecting = ref(false)
   const connecting = ref('')
+
+  watch(
+    () => snippetStore.showModal,
+    show => {
+      if (show) {
+        snippetSaveModal.value?.openModal()
+      } else {
+        snippetSaveModal.value?.closeModal()
+      }
+    }
+  )
+
+  function closeSnippetSaveModal() {
+    snippetStore.modalClosed()
+  }
 
   onMounted(() => {
     events.addEventListener('client.connect.reply', connectReply)
@@ -174,6 +198,15 @@
 
 <template>
   <div class="flex items-center space-x-2" v-if="tab">
+    <!-- snippet -->
+    <SecondaryButton
+      class="!px-2"
+      @click="snippetHistoryModal.openModal()"
+      v-tippy="{ content: 'Manage your snippets', placement: 'bottom' }"
+    >
+      <BookmarkIcon class="size-4" />
+    </SecondaryButton>
+
     <!-- local -->
     <SecondaryButton
       class="!px-2"
@@ -378,6 +411,12 @@
     </Modal>
     <Modal title="Connect to Kubernetes" ref="kubectlModal" size="2xl">
       <KubectlView @connected="kubectlConnected($event)" @removed="kubectlRemoved($event)" />
+    </Modal>
+    <Modal title="Save snippet" ref="snippetSaveModal" size="xl" @close="closeSnippetSaveModal">
+      <SnippetSaveView @saved="closeSnippetSaveModal" />
+    </Modal>
+    <Modal title="Snippets" ref="snippetHistoryModal" size="5xl">
+      <SnippetHistoryView @selected="snippetHistoryModal.closeModal()" />
     </Modal>
   </div>
 </template>
