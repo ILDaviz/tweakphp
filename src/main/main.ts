@@ -17,6 +17,10 @@ import url from 'url'
 import { fixPath } from './utils/fix-path.ts'
 import { isWindows } from './system/platform.ts'
 
+import { runMigrations } from './db/migration.ts'
+import { initSnippet } from './tools/snipetts.ts'
+
+runMigrations()
 fixPath()
 
 Object.assign(console, log.functions)
@@ -120,3 +124,5 @@ app.on('window-all-closed', () => {
 app.on('before-quit', async () => {
   await lsp.shutdown()
 })
+
+initSnippet()
