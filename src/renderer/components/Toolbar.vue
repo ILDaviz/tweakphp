@@ -199,7 +199,11 @@
 <template>
   <div class="flex items-center space-x-2" v-if="tab">
     <!-- snippet -->
-    <SecondaryButton class="!px-2" @click="snippetHistoryModal.openModal()">
+    <SecondaryButton
+      class="!px-2"
+      @click="snippetHistoryModal.openModal()"
+      v-tippy="{ content: 'Manage your snippets', placement: 'bottom' }"
+    >
       <BookmarkIcon class="size-4" />
     </SecondaryButton>
 
