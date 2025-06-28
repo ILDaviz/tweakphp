@@ -133,7 +133,7 @@
           </div>
         </div>
 
-        <div class="mt-2">
+        <div v-if="errorResponse" class="mt-2">
           <span v-text="errorResponse" class="text-xs text-red-500"></span>
         </div>
       </div>

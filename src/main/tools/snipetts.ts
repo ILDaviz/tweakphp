@@ -48,7 +48,7 @@ export async function initSnippet() {
           code: snippet.code || '',
           tab_id: snippet.tab_id,
           tab_name: snippet.tab_name,
-          tags: snippet.tags,
+          tags: snippet.tags ?? [],
           created_at: createdAt,
           updated_at: createdAt,
         }
@@ -79,8 +79,8 @@ export async function initSnippet() {
         id: z.number().int().positive('ID must be a positive integer'),
         name: z.string().min(1, 'Name cannot be empty'),
         code: z.string().min(1, 'Code cannot be empty'),
-        tab_id: z.number().optional(),
-        tab_name: z.string().optional(),
+        tab_id: z.number().nullable().optional(),
+        tab_name: z.string().nullable().optional(),
         tags: z.array(z.string()).optional(),
       })
 

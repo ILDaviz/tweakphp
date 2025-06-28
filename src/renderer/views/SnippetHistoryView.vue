@@ -12,6 +12,7 @@
   import { z } from 'zod'
   import { useTabsStore } from '../stores/tabs'
   import { refAutoReset } from '@vueuse/core'
+  import SwitchInput from '@/components/SwitchInput.vue'
 
   const tabsStore = useTabsStore()
 
@@ -22,6 +23,7 @@
   const loadingEdit = ref<boolean>(false)
   const confirmDelete = refAutoReset<boolean>(false, 5000) // Reset after 5 seconds
 
+  const errorResponse = ref<string>('')
   const snippetSelected = ref<Snippet | null>(null)
   const searchQuery = ref<string>('')
   const enableEditMode = ref<boolean>(false)
@@ -31,6 +33,7 @@
   const snippets = ref<Snippet[] | []>([])
   const snippetTabId = ref<string | number | null>(null)
   const snippetTabName = ref<string | null>(null)
+  const updateTabRef = ref<boolean>(false)
 
   type SnippetResponse = {
     error?: string
@@ -38,6 +41,12 @@
   }
 
   const handleLoadedSnippets = (snippetResponses: SnippetResponse) => {
+    if (snippetResponses.error) {
+      console.error('Error loading snippets:', snippetResponses.error)
+      errorResponse.value = snippetResponses.error
+      return
+    }
+
     snippets.value = snippetResponses?.data || []
   }
 
@@ -106,6 +115,7 @@
     window.ipcRenderer.on('delete-snippet.reply', response => {
       if (response.error) {
         console.error('Error deleting snippet:', response.error)
+        errorResponse.value = response.error
         return
       }
 
@@ -128,8 +138,8 @@
     id: z.number().int().positive('ID must be a positive integer'),
     name: z.string().min(1, 'Name cannot be empty'),
     code: z.string().min(1, 'Code cannot be empty'),
-    tab_id: z.number().optional(),
-    tab_name: z.string().optional(),
+    tab_id: z.number().nullable().optional(),
+    tab_name: z.string().nullable().optional(),
     tags: z.array(z.string()).optional(),
   })
 
@@ -147,8 +157,8 @@
       id: snippetSelected.value.id,
       name: snippetName.value,
       code: snippetCode.value,
-      tab_id: tabsStore.current?.id,
-      tab_name: tabsStore.current?.name,
+      tab_id: updateTabRef.value ? tabsStore.current?.id : snippetTabId.value,
+      tab_name: updateTabRef.value ? tabsStore.current?.name : snippetTabName.value,
       tags: snippetTags.value,
     }
 
@@ -165,6 +175,7 @@
         loadingEdit.value = false
         enableEditMode.value = false
         console.error('Error updating snippet:', response.error)
+        errorResponse.value = response.error
         return
       }
       snippets.value = snippets.value.map(snippet =>
@@ -277,6 +288,12 @@
                 id="tag_input"
                 placeholder="Snippet tags (Enter to add, comma to separate)"
               />
+              <div class="flex items-center justify-start gap-2">
+                Update snippet to current tab?
+                <SwitchInput
+                  v-model="updateTabRef"
+                />
+              </div>
             </div>
           </div>
 
@@ -304,6 +321,10 @@
             :path="tabsStore.current?.path"
             :auto-focus="true"
           />
+
+          <div v-if="errorResponse" class="mt-2">
+            <span v-text="errorResponse" class="text-xs text-red-500"></span>
+          </div>
 
           <div class="flex items-center justify-between mt-2">
             <PrimaryButton @click="handleDelete" class="flex items-center gap-1">
