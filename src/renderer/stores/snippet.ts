@@ -8,12 +8,10 @@ export const useSnippetStore = defineStore('snippet', () => {
   const openModal = (snippetCode: string): void => {
     code.value = snippetCode
     showModal.value = true
-    console.log(`Opening snippet modal with code: ${snippetCode}`)
   }
   const modalClosed = (): void => {
     showModal.value = false
     code.value = ''
-    console.log('Snippet modal closed')
   }
 
   const getCode = (): string => {
