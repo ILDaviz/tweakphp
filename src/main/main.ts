@@ -12,10 +12,15 @@ import * as updater from './system/updater.ts'
 import * as link from './system/link.ts'
 import * as tray from './system/tray.ts'
 
+import { runMigrations } from './db/migration.ts'
+import { initCodeHistory } from './tools/code-history.ts'
+
 import url from 'url'
 
 import { fixPath } from './utils/fix-path.ts'
 import { isWindows } from './system/platform.ts'
+
+runMigrations()
 
 fixPath()
 
@@ -120,3 +125,5 @@ app.on('window-all-closed', () => {
 app.on('before-quit', async () => {
   await lsp.shutdown()
 })
+
+initCodeHistory()

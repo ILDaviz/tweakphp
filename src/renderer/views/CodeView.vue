@@ -291,6 +291,7 @@
           }"
           :path="tab.path"
           :auto-focus="true"
+          :enable-history="true"
         />
       </pane>
       <pane :size="tab.pane.result">

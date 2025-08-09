@@ -1,17 +1,24 @@
 <script setup lang="ts">
-  import { onMounted, onBeforeUnmount, ref } from 'vue'
+  import { onBeforeUnmount, onMounted, ref } from 'vue'
   import * as monaco from 'monaco-editor'
   import { MonacoLanguageClient } from 'monaco-languageclient'
   import { toSocket, WebSocketMessageReader, WebSocketMessageWriter } from 'vscode-ws-jsonrpc'
   import { CloseAction, ErrorAction } from 'vscode-languageclient'
   import { initVimMode } from 'monaco-vim'
-  import { installPHPLanguage, installOutputLanguage, installThemes } from '../editor'
+  import { installOutputLanguage, installPHPLanguage, installThemes } from '../editor'
   import { useSettingsStore } from '../stores/settings'
+  import { useTabsStore } from '../stores/tabs'
+  import { useDebounceFn } from '@vueuse/core'
 
   const settingsStore = useSettingsStore()
+  const tabsStore = useTabsStore()
 
   // Props
   const props = defineProps({
+    enableHistory: {
+      type: Boolean,
+      default: false,
+    },
     editorId: {
       type: String,
     },
@@ -42,6 +49,18 @@
 
   const editorContainer = ref(null)
   const vimMode = ref(null)
+
+  const isUpdatingFromHistory = ref(false)
+
+  function saveHistoryNow(tabId: number, code: string, cursor: monaco.IPosition) {
+    if (!window.historyApi) {
+      console.warn('History API is not available')
+      return
+    }
+    window.historyApi.add(tabId, code, cursor)
+  }
+
+  const debouncedSaveHistory = useDebounceFn(saveHistoryNow, 500)
 
   let languageClient: MonacoLanguageClient | null = null
   let editor: monaco.editor.IStandaloneCodeEditor | null = null
@@ -75,6 +94,73 @@
         scrollBeyondLastLine: false,
         lightbulb: { enabled: 'off' as monaco.editor.ShowLightbulbIconMode },
       })
+
+      if (props.enableHistory) {
+        editor.addAction({
+          id: 'history-undo',
+          label: 'History: Undo',
+          keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyZ],
+          run: () => {
+            window.historyApi.undo(tabsStore.current?.id)
+          },
+        })
+
+        editor.addAction({
+          id: 'history-redo',
+          label: 'History: Redo',
+          keybindings: [
+            monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyY,
+            monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyZ,
+          ],
+          run: () => {
+            window.historyApi.redo(tabsStore.current?.id)
+          },
+        })
+
+        editor.onDidChangeModelContent(() => {
+          if (isUpdatingFromHistory.value) return;
+
+          const currentValue = editor!.getValue();
+          emit('update:value', currentValue);
+
+          const currentPosition = editor!.getPosition();
+          if (currentPosition) {
+            debouncedSaveHistory(tabsStore.current?.id, currentValue, currentPosition);
+          }
+        })
+
+        window.historyApi.onUndoReply((data) => {
+          if (editor) {
+            isUpdatingFromHistory.value = true
+            editor.setValue(data.code)
+
+            if (data.cursor) {
+              editor.setPosition(data.cursor)
+            }
+            editor.focus()
+            isUpdatingFromHistory.value = false
+          }
+        })
+
+        window.historyApi.onRedoReply((data) => {
+          if (editor) {
+            isUpdatingFromHistory.value = true
+            editor.setValue(data.code)
+
+            if (data.cursor) {
+              editor.setPosition(data.cursor)
+            }
+            editor.focus()
+            isUpdatingFromHistory.value = false
+          }
+        })
+
+        saveHistoryNow(tabsStore.current?.id, props.value, { lineNumber: 1, column: 1 })
+      } else {
+        editor.onDidChangeModelContent(() => {
+          emit('update:value', editor!.getValue());
+        })
+      }
 
       if (settingsStore.settings.vimMode === 'on') {
         vimMode.value = initVimMode(editor)
@@ -113,6 +199,11 @@
   })
 
   onBeforeUnmount(async () => {
+
+    if (props.enableHistory) {
+      window.historyApi.removeAllListeners()
+    }
+
     if (editor) {
       if (vimMode.value) {
         vimMode.value.dispose()
