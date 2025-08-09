@@ -19,6 +19,7 @@ import { isWindows } from './system/platform.ts'
 
 import { runMigrations } from './db/migration.ts'
 import { initSnippet } from './tools/snipetts.ts'
+import { initCodeHistory } from './tools/code-history.ts'
 
 runMigrations()
 fixPath()
@@ -126,3 +127,4 @@ app.on('before-quit', async () => {
 })
 
 initSnippet()
+initCodeHistory()

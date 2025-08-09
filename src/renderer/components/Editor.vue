@@ -8,12 +8,28 @@
   import { installOutputLanguage, installPHPLanguage, installThemes } from '../editor'
   import { useSettingsStore } from '../stores/settings'
   import { useSnippetStore } from '../stores/snippet'
+  import { useTabsStore } from '../stores/tabs'
+
+  function debounce(func: (...args: any[]) => void, timeout = 750) {
+    let timer: number
+    return (...args: any[]) => {
+      clearTimeout(timer)
+      timer = setTimeout(() => {
+        func.apply(this, args)
+      }, timeout)
+    }
+  }
 
   const settingsStore = useSettingsStore()
+  const tabsStore = useTabsStore()
   const snippetStore = useSnippetStore()
 
   // Props
   const props = defineProps({
+    enableHistory: {
+      type: Boolean,
+      default: false,
+    },
     editorId: {
       type: String,
     },
@@ -42,8 +58,39 @@
     },
   })
 
+  const insertSnippet = (snippetCode: string) => {
+    if (!editor) {
+      return;
+    }
+
+    const selection = editor.getSelection();
+
+    if (!selection) {
+      return;
+    }
+
+    const op = {
+      range: selection,
+      text: snippetCode,
+      forceMoveMarkers: true,
+    };
+
+    editor.executeEdits('snippet-inserter', [op]);
+    editor.focus();
+  };
+
   const editorContainer = ref(null)
   const vimMode = ref(null)
+
+  const isUpdatingFromHistory = ref(false)
+
+  const saveHistory = debounce((tabId: number, code: string, cursor: monaco.IPosition) => {
+    if (!window.historyApi) {
+      console.warn('History API is not available')
+      return
+    }
+    window.historyApi.add(tabId, code, cursor)
+  }, 500)
 
   let languageClient: MonacoLanguageClient | null = null
   let editor: monaco.editor.IStandaloneCodeEditor | null = null
@@ -77,6 +124,71 @@
         scrollBeyondLastLine: false,
         lightbulb: { enabled: 'off' as monaco.editor.ShowLightbulbIconMode },
       })
+
+      if (props.enableHistory) {
+        editor.addAction({
+          id: 'history-undo',
+          label: 'History: Undo',
+          keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyZ],
+          run: () => {
+            window.historyApi.undo(tabsStore.current?.id)
+          },
+        })
+
+        editor.addAction({
+          id: 'history-redo',
+          label: 'History: Redo',
+          keybindings: [
+            monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyY,
+            monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KeyZ,
+          ],
+          run: () => {
+            window.historyApi.redo(tabsStore.current?.id)
+          },
+        })
+
+        editor.onDidChangeModelContent(() => {
+          if (isUpdatingFromHistory.value) return;
+
+          const currentValue = editor!.getValue();
+          emit('update:value', currentValue);
+
+          const currentPosition = editor!.getPosition();
+          if (currentPosition) {
+            saveHistory(tabsStore.current?.id, currentValue, currentPosition);
+          }
+        })
+
+        window.historyApi.onUndoReply((data) => {
+          if (editor) {
+            isUpdatingFromHistory.value = true
+            editor.setValue(data.code)
+
+            if (data.cursor) {
+              editor.setPosition(data.cursor)
+            }
+            editor.focus()
+            isUpdatingFromHistory.value = false
+          }
+        })
+
+        window.historyApi.onRedoReply((data) => {
+          if (editor) {
+            isUpdatingFromHistory.value = true
+            editor.setValue(data.code)
+
+            if (data.cursor) {
+              editor.setPosition(data.cursor)
+            }
+            editor.focus()
+            isUpdatingFromHistory.value = false
+          }
+        })
+      } else {
+        editor.onDidChangeModelContent(() => {
+          emit('update:value', editor!.getValue());
+        })
+      }
 
       editor.addAction({
         id: 'save-snippet',
@@ -136,6 +248,12 @@
   })
 
   onBeforeUnmount(async () => {
+
+    // PULIZIA DEI LISTENER IPC
+    if (props.enableHistory) {
+      window.historyApi.removeAllListeners()
+    }
+
     if (editor) {
       if (vimMode.value) {
         vimMode.value.dispose()
@@ -249,6 +367,7 @@
   defineExpose({
     updateValue,
     focusEditor,
+    insertSnippet,
   })
 </script>
 

@@ -11,14 +11,12 @@
   import { Snippet } from '../../types/snippet.type.ts'
   import TagsInput from '@/components/TagsInput.vue'
   import { z } from 'zod'
-  import SwitchInput from '@/components/SwitchInput.vue'
 
   const emit = defineEmits(['saved'])
   const tabsStore = useTabsStore()
   const snippetStore = useSnippetStore()
 
   const loading = ref<boolean>(false)
-  const saveTabRef = ref<boolean>(false)
   const errorResponse = ref<string>('')
   const snippetName = ref('')
   const snippetTags = ref<string[]>([])
@@ -47,13 +45,8 @@
       tags: snippetTags.value,
     }
 
-    if (saveTabRef.value && tabsStore.current) {
-      payload.tab_id = tabsStore.current.id
-      payload.tab_name = tabsStore.current.name
-    } else {
-      payload.tab_id = null
-      payload.tab_name = null
-    }
+    payload.tab_id = null
+    payload.tab_name = null
 
     const result = snippetSchema.safeParse(payload)
 
@@ -96,24 +89,19 @@
               v-model="snippetTags"
               placeholder="Snippet tags (Enter to add, comma to separate)"
             />
-            <div class="flex items-center justify-start gap-2">
-              Save snippet to current tab:
-              <SwitchInput
-                v-model="saveTabRef"
-              />
-            </div>
           </div>
 
           <Divider />
 
-          <h3>Preview</h3>
+          <h3>Preview code</h3>
 
-          <div class="h-[200px] flex w-auto">
+          <div class="h-[200px] flex w-auto rounded overflow-hidden border-2 border-gray-500/20">
             <Editor
               :id="`snippet-preview-${Date.now()}`"
               :key="`snippet-preview-${Date.now()}`"
               :editor-id="`snippet-preview-${Date.now()}`"
               language="output"
+              class="p-2 w-full h-full"
               :value="snippetCode"
               :readonly="true"
             />

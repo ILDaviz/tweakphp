@@ -12,7 +12,7 @@
   import { z } from 'zod'
   import { useTabsStore } from '../stores/tabs'
   import { refAutoReset } from '@vueuse/core'
-  import SwitchInput from '@/components/SwitchInput.vue'
+  import events from '../events'
 
   const tabsStore = useTabsStore()
 
@@ -33,7 +33,6 @@
   const snippets = ref<Snippet[] | []>([])
   const snippetTabId = ref<string | number | null>(null)
   const snippetTabName = ref<string | null>(null)
-  const updateTabRef = ref<boolean>(false)
 
   type SnippetResponse = {
     error?: string
@@ -128,9 +127,10 @@
     if (!snippetSelected.value) return
     if (!tabsStore.current) return
 
-    const currentTab = tabsStore.current
-    currentTab.code = snippetSelected.value.code
-    tabsStore.updateTab(currentTab)
+    events.dispatchEvent(new CustomEvent('insert-snippet', {
+      detail: snippetSelected.value.code
+    }));
+
     emit('selected', snippetSelected.value)
   }
 
@@ -157,8 +157,8 @@
       id: snippetSelected.value.id,
       name: snippetName.value,
       code: snippetCode.value,
-      tab_id: updateTabRef.value ? tabsStore.current?.id : snippetTabId.value,
-      tab_name: updateTabRef.value ? tabsStore.current?.name : snippetTabName.value,
+      tab_id: null,
+      tab_name: null,
       tags: snippetTags.value,
     }
 
@@ -288,39 +288,36 @@
                 id="tag_input"
                 placeholder="Snippet tags (Enter to add, comma to separate)"
               />
-              <div class="flex items-center justify-start gap-2">
-                Update snippet to current tab?
-                <SwitchInput
-                  v-model="updateTabRef"
-                />
-              </div>
             </div>
           </div>
 
-          <Editor
-            v-if="!enableEditMode"
-            ref="snippetShow"
-            class="min-h-[300px] h-full w-full"
-            :key="`snippet-show-${snippetSelected.id + Date.now()}`"
-            :editor-id="`snippet-show-${snippetSelected.id + Date.now()}`"
-            language="output"
-            :value="snippetCode"
-            readonly
-            :wrap="true"
-          />
-
-          <Editor
-            v-else
-            ref="snippetEdit"
-            class="min-h-[300px] h-full w-full"
-            :key="`snippet-edit-${snippetSelected.id}`"
-            :editor-id="`snippet-edit-${snippetSelected.id}`"
-            v-model:value="snippetCode"
-            language="php"
-            :wrap="true"
-            :path="tabsStore.current?.path"
-            :auto-focus="true"
-          />
+          <div
+          class="rounded overflow-hidden border-2 border-gray-500/20"
+          >
+            <Editor
+              v-if="!enableEditMode"
+              ref="snippetShow"
+              class="min-h-[300px] h-full w-full p-2"
+              :key="`snippet-show-${snippetSelected.id + Date.now()}`"
+              :editor-id="`snippet-show-${snippetSelected.id + Date.now()}`"
+              language="output"
+              :value="snippetCode"
+              readonly
+              :wrap="true"
+            />
+            <Editor
+              v-else
+              ref="snippetEdit"
+              class="min-h-[300px] h-full w-full"
+              :key="`snippet-edit-${snippetSelected.id}`"
+              :editor-id="`snippet-edit-${snippetSelected.id}`"
+              v-model:value="snippetCode"
+              language="php"
+              :wrap="true"
+              :path="tabsStore.current?.path"
+              :auto-focus="true"
+            />
+          </div>
 
           <div v-if="errorResponse" class="mt-2">
             <span v-text="errorResponse" class="text-xs text-red-500"></span>
@@ -335,11 +332,16 @@
               <PrimaryButton @click="editOrSaveSnippet" class="flex items-center gap-1">
                 <span>{{ enableEditMode ? 'Save' : 'Edit' }}</span>
               </PrimaryButton>
-              <PrimaryButton v-if="!enableEditMode" @click="handleUse">
-                <div class="flex items-center gap-1">
-                  <span> Use in editor </span>
-                </div>
-              </PrimaryButton>
+              <div
+                v-if="!enableEditMode"
+                class="flex justify-center gap-2 items-center"
+              >
+                <PrimaryButton @click="handleUse">
+                  <div class="flex items-center gap-1">
+                    <span> Add </span>
+                  </div>
+                </PrimaryButton>
+              </div>
             </div>
           </div>
         </div>
