@@ -8,9 +8,10 @@
   "version": "0.7.3",
   "main": "dist/main.js",
   "scripts": {
+    "postinstall": "electron-builder install-app-deps",
     "dev": "concurrently \"vite\" \"node build.js --dev && electron .\"",
     "update-clients": "node ./scripts/update-clients.js",
-    "build": "vite build && electron-rebuild -f -w better-sqlite3 && node build.js --prod",
+    "build": "vite build && node build.js --prod",
     "build-mac": "npm run build && electron-builder --mac --universal",
     "build-linux": "npm run build && electron-builder --linux",
     "build-win": "npm run build && electron-builder --win",
@@ -106,6 +107,9 @@
     },
     "afterSign": "scripts/notarize.js"
   },
+  "dependencies": {
+    "better-sqlite3": "^12.1.1"
+  },
   "devDependencies": {
     "@codingame/esbuild-import-meta-url-plugin": "~1.0.2",
     "@codingame/monaco-vscode-configuration-service-override": "~7.0.7",
@@ -135,7 +139,6 @@
     "@vueuse/core": "^13.4.0",
     "adm-zip": "^0.5.16",
     "autoprefixer": "^10.4.19",
-    "better-sqlite3": "^12.1.1",
     "bufferutil": "^4.0.8",
     "concurrently": "^9.1.2",
     "dotenv": "^16.4.7",
