@@ -118,18 +118,18 @@
         })
 
         editor.onDidChangeModelContent(() => {
-          if (isUpdatingFromHistory.value) return;
+          if (isUpdatingFromHistory.value) return
 
-          const currentValue = editor!.getValue();
-          emit('update:value', currentValue);
+          const currentValue = editor!.getValue()
+          emit('update:value', currentValue)
 
-          const currentPosition = editor!.getPosition();
+          const currentPosition = editor!.getPosition()
           if (currentPosition) {
-            debouncedSaveHistory(tabsStore.current?.id, currentValue, currentPosition);
+            debouncedSaveHistory(tabsStore.current?.id, currentValue, currentPosition)
           }
         })
 
-        window.historyApi.onUndoReply((data) => {
+        window.historyApi.onUndoReply(data => {
           if (editor) {
             isUpdatingFromHistory.value = true
             editor.setValue(data.code)
@@ -142,7 +142,7 @@
           }
         })
 
-        window.historyApi.onRedoReply((data) => {
+        window.historyApi.onRedoReply(data => {
           if (editor) {
             isUpdatingFromHistory.value = true
             editor.setValue(data.code)
@@ -158,7 +158,7 @@
         saveHistoryNow(tabsStore.current?.id, props.value, { lineNumber: 1, column: 1 })
       } else {
         editor.onDidChangeModelContent(() => {
-          emit('update:value', editor!.getValue());
+          emit('update:value', editor!.getValue())
         })
       }
 
@@ -199,7 +199,6 @@
   })
 
   onBeforeUnmount(async () => {
-
     if (props.enableHistory) {
       window.historyApi.removeAllListeners()
     }

@@ -38,30 +38,30 @@ contextBridge.exposeInMainWorld('platformInfo', {
  */
 contextBridge.exposeInMainWorld('historyApi', {
   add: (tabId: number, code: string, cursor: monaco.IPosition) => {
-    ipcRenderer.send('code-add', { tabId, code, cursor });
+    ipcRenderer.send('code-add', { tabId, code, cursor })
   },
   undo: (tabId: number) => {
-    ipcRenderer.send('code-undo', tabId);
+    ipcRenderer.send('code-undo', tabId)
   },
   redo: (tabId: number) => {
-    ipcRenderer.send('code-redo', tabId);
+    ipcRenderer.send('code-redo', tabId)
   },
   onUndoReply: (callback: (data: { code: string; cursor: monaco.IPosition }) => void) => {
     ipcRenderer.on('code-undo.reply', (_event, args) => {
       if (args.data) {
-        callback(args.data);
+        callback(args.data)
       }
-    });
+    })
   },
   onRedoReply: (callback: (data: { code: string; cursor: monaco.IPosition }) => void) => {
     ipcRenderer.on('code-redo.reply', (_event, args) => {
       if (args.data) {
-        callback(args.data);
+        callback(args.data)
       }
-    });
+    })
   },
   removeAllListeners: () => {
-    ipcRenderer.removeAllListeners('code-undo.reply');
-    ipcRenderer.removeAllListeners('code-redo.reply');
-  }
-});
+    ipcRenderer.removeAllListeners('code-undo.reply')
+    ipcRenderer.removeAllListeners('code-redo.reply')
+  },
+})

@@ -28,10 +28,7 @@ buildSync({
   ...options,
 })
 
-copySync(
-  'node_modules/better-sqlite3/build/Release/better_sqlite3.node',
-  'build/better_sqlite3.node'
-)
+copySync('node_modules/better-sqlite3/build/Release/better_sqlite3.node', 'build/better_sqlite3.node')
 
 copySync('build/icon.png', 'dist/icon.png')
 copySync('build/icon.icns', 'dist/icon.icns')
