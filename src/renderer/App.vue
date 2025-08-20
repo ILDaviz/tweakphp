@@ -16,7 +16,7 @@
   import ProjectTile from './components/ProjectTile.vue'
   import Modal from './components/Modal.vue'
   import NewProjectView from './views/NewProjectView.vue'
-  import ContextMenu from '@/components/ContextMenu.vue'
+  import ProjectMenuContext from '@/components/contextMenus/ProjectMenuContext.vue'
 
   const colorSchemeStore = useColorSchemeStore()
   const colorSchemeSetup = () => {
@@ -140,7 +140,7 @@
               @click="router.replace({ name: 'code', params: { id: tab.id } })"
               @mousedown.middle="tabStore.removeTab(tab.id)"
             >
-              <ContextMenu>
+              <ProjectMenuContext>
                 <ProjectTile
                   :active="router.currentRoute.value.name === 'code' && tabStore.getCurrent()?.id === tab.id"
                   :name="tab.name"
@@ -149,7 +149,7 @@
                 >
                   {{ tab.name[0] }}
                 </ProjectTile>
-              </ContextMenu>
+              </ProjectMenuContext>
             </button>
           </template>
         </div>
