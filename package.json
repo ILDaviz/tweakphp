@@ -1,11 +1,12 @@
 {
   "name": "tweakphp",
   "description": "Tweak your PHP code",
+  "private": false,
   "author": {
     "name": "Saeed Vaziry",
     "email": "mr.saeedvaziry@gmail.com"
   },
-  "version": "0.7.3",
+  "version": "0.9.0",
   "main": "dist/main.js",
   "scripts": {
     "postinstall": "electron-builder install-app-deps",
