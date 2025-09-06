@@ -6,20 +6,25 @@
   import { useTabsStore } from '@/stores/tabs'
   import ChangeNameProject from '@/views/ChangeNameProject.vue'
   const changeNameProject = ref()
+  import { Tab } from '../../types/tab'
 
   const settingsStore = useSettingsStore()
   const tabsStore = useTabsStore()
+
+  const props = defineProps<{
+    tab: Tab
+  }>()
 
   function openModalChangeName() {
     changeNameProject.value.openModal()
   }
 
   function goToFolder() {
-    window.ipcRenderer.send('source.openPath', tabsStore.current.path)
+    window.ipcRenderer.send('source.openPath', props.tab.path)
   }
 
   function removeTab() {
-    tabsStore.removeTab(tabsStore.current.id)
+    tabsStore.removeTab(props.tab.id)
   }
 
   const hoverChangeName = ref(false)
@@ -87,6 +92,6 @@
     </ContextMenuPortal>
   </ContextMenuRoot>
   <Modal title="Change name" ref="changeNameProject" size="xl">
-    <ChangeNameProject @opened="changeNameProject.closeModal()" />
+    <ChangeNameProject @opened="changeNameProject.closeModal()" :tab="tab" />
   </Modal>
 </template>

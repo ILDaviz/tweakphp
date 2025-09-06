@@ -1,27 +1,23 @@
 <script setup lang="ts">
-  import { ref, watch } from 'vue'
+  import { ref } from 'vue'
   import TextInput from '../components/TextInput.vue'
   import SecondaryButton from '../components/SecondaryButton.vue'
   import PrimaryButton from '../components/PrimaryButton.vue'
-  import { useTabsStore } from '@/stores/tabs'
+  import { Tab } from '../../types/tab.type.ts'
+  import { useTabsStore } from '@/stores/tabs.ts'
 
   const tabsStore = useTabsStore()
-
   const emit = defineEmits(['opened'])
 
-  const editedName = ref(tabsStore.current.name)
+  const props = defineProps<{
+    tab: Tab
+  }>()
 
-  watch(
-    () => tabsStore.current.name,
-    newName => {
-      editedName.value = newName
-    }
-  )
+  const editedName = ref(props.tab.name)
 
   const handleSave = () => {
     if (editedName.value.trim()) {
-      console.log('Tab name updated to:', editedName.value)
-      tabsStore.updateTabName(tabsStore.current?.id, editedName.value)
+      tabsStore.updateTabName(props.tab.id, editedName.value)
       emit('opened')
     }
   }

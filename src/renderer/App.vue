@@ -140,7 +140,7 @@
               @click="router.replace({ name: 'code', params: { id: tab.id } })"
               @mousedown.middle="tabStore.removeTab(tab.id)"
             >
-              <ProjectMenuContext>
+              <ProjectMenuContext :tab="tab">
                 <ProjectTile
                   :active="router.currentRoute.value.name === 'code' && tabStore.getCurrent()?.id === tab.id"
                   :name="tab.name"
