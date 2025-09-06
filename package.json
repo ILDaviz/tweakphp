@@ -107,7 +107,9 @@
     "afterSign": "scripts/notarize.js"
   },
   "dependencies": {
-    "better-sqlite3": "^12.1.1"
+    "better-sqlite3": "^12.1.1",
+    "js-yaml": "^4.1.0",
+    "reka-ui": "^2.4.1"
   },
   "devDependencies": {
     "@codingame/esbuild-import-meta-url-plugin": "~1.0.2",
