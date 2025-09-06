@@ -7,8 +7,10 @@
   import { initVimMode } from 'monaco-vim'
   import { installPHPLanguage, installOutputLanguage, installThemes } from '../editor'
   import { useSettingsStore } from '../stores/settings'
+  import { useLspStore } from '../stores/lsp'
 
   const settingsStore = useSettingsStore()
+  const lspStore = useLspStore()
 
   // Props
   const props = defineProps({
@@ -113,6 +115,8 @@
   })
 
   onBeforeUnmount(async () => {
+    lspStore.setDisconnected()
+
     if (editor) {
       if (vimMode.value) {
         vimMode.value.dispose()
@@ -152,8 +156,18 @@
     }
   }
 
+  const reconnectLsp = async () => {
+    if (languageClient && languageClient.isRunning()) {
+      await languageClient.stop()
+      await languageClient.dispose()
+    }
+
+    await createWebSocketClient(`ws://127.0.0.1:${import.meta.env.VITE_LSP_WEBSOCKET_PORT}`)
+  }
+
   const createWebSocketClient = (url: string) => {
     return new Promise<void>((resolve, reject) => {
+      lspStore.setConnecting()
       const webSocket = new WebSocket(url)
 
       webSocket.onopen = async () => {
@@ -172,7 +186,9 @@
 
         try {
           await languageClient.start()
+          lspStore.setConnected()
         } catch (e) {
+          lspStore.setDisconnected()
           // reject(error)
         }
 
@@ -184,7 +200,12 @@
       // }
 
       webSocket.onerror = error => {
+        lspStore.setDisconnected()
         reject(error)
+      }
+
+      webSocket.onclose = () => {
+        lspStore.setDisconnected()
       }
     })
   }
@@ -217,6 +238,7 @@
   defineExpose({
     updateValue,
     focusEditor,
+    reconnectLsp,
   })
 </script>
 

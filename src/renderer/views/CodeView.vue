@@ -2,7 +2,8 @@
   import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
   import { useExecuteStore } from '../stores/execute'
   import { useTabsStore } from '../stores/tabs'
-  import { useVaporStore } from '../stores/vapor.ts'
+  import { useVaporStore } from '../stores/vapor'
+  import { useLspStore } from '../stores/lsp'
   import Container from '../components/Container.vue'
   import events from '../events'
   import { useSettingsStore } from '../stores/settings'
@@ -15,12 +16,16 @@
   import 'splitpanes/dist/splitpanes.css'
   import StackedOutput from '../components/StackedOutput.vue'
   import { useLodaersStore } from '../stores/loaders'
+  import ExclamationCircle from '@/components/icons/ExclamationCircle.vue'
+  import ArrowPathRoundedSquare from '@/components/icons/ArrowPathRoundedSquare.vue'
+  import CheckCircle from '@/components/icons/CheckCircle.vue'
 
   const settingsStore = useSettingsStore()
   const executeStore = useExecuteStore()
   const vaporStore = useVaporStore()
   const tabsStore = useTabsStore()
-  const codeEditor = ref(null)
+  const lspStore = useLspStore()
+  const codeEditor = ref<InstanceType<typeof Editor> | null>(null)
   const resultEditor = ref<InstanceType<typeof Editor> | null>(null)
   const loadersStore = useLodaersStore()
 
@@ -50,6 +55,23 @@
     const output = [...tab.value.result].reverse().find(item => item.output.trim() !== '')
     return output ? output.output : ''
   })
+
+  const lspStatusTooltip = computed(() => {
+    switch (lspStore.status) {
+      case 'connected':
+        return 'LSP Connected'
+      case 'connecting':
+        return 'LSP Connecting...'
+      case 'disconnected':
+        return 'LSP Disconnected (Click to reconnect)'
+    }
+  })
+
+  const handleLspReconnect = () => {
+    if (lspStore.status === 'disconnected' && codeEditor.value) {
+      codeEditor.value.reconnectLsp()
+    }
+  }
 
   const vaporRequestEnvironmentTab = () => {
     if (!tabsStore.current?.id || !tabsStore.current?.path) {
@@ -316,6 +338,28 @@
         backgroundColor: settingsStore.colors.background,
       }"
     >
+      <div
+        class="flex items-center ml-2"
+        :class="{ 'cursor-pointer': lspStore.status === 'disconnected' }"
+        v-tippy="lspStatusTooltip"
+        @click="handleLspReconnect"
+      >
+        <template v-if="lspStore.status === 'connected'">
+          <div class="flex items-center justify-center bg-green-500 rounded-full size-4">
+            <CheckCircle class="size-4 shrink-0 text-green-800" />
+          </div>
+        </template>
+        <template v-else-if="lspStore.status === 'connecting'">
+          <div class="flex items-center justify-center bg-yellow-500 rounded-full size-4">
+            <ArrowPathRoundedSquare class="w-3 h-3 shrink-0 text-yellow-800 animate-spin" />
+          </div>
+        </template>
+        <template v-else-if="lspStore.status === 'disconnected'">
+          <div class="flex items-center justify-center bg-red-500 rounded-full size-4">
+            <ExclamationCircle class="size-4 shrink-0 text-red-800" />
+          </div>
+        </template>
+      </div>
       <div class="px-2 flex gap-1 w-1/2 items-center">
         <div class="whitespace-nowrap">PHP {{ tab.info.php_version }}</div>
       </div>
