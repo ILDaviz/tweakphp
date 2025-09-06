@@ -31,7 +31,13 @@
   <div>
     <div>
       <label for="tabName" class="block text-sm font-medium text-gray-300 mb-2">Tab Name</label>
-      <TextInput id="tabName" v-model="editedName" @keyup.enter="handleSave" placeholder="Enter a new name" />
+      <TextInput
+        class="w-full"
+        id="tabName"
+        v-model="editedName"
+        @keyup.enter="handleSave"
+        placeholder="Enter a new name"
+      />
     </div>
     <div class="mt-6 flex justify-end space-x-3">
       <SecondaryButton @click="handleClose">Cancel</SecondaryButton>
