@@ -68,8 +68,8 @@
   })
 
   const handleLspReconnect = () => {
-    if (lspStore.status === 'disconnected' && codeEditor.value) {
-      codeEditor.value.reconnectLsp()
+    if (lspStore.status === 'disconnected') {
+      window.ipcRenderer.send('lsp.restart')
     }
   }
 
@@ -188,6 +188,13 @@
   }
 
   onMounted(async () => {
+    window.ipcRenderer.on('lsp.restart.success', () => {
+      console.log('LSP restart success, reconnecting editors...')
+      if (codeEditor.value) {
+        codeEditor.value.reconnectLsp()
+      }
+    })
+
     if (settingsStore.settings.php === '') {
       await router.push({ name: 'settings' })
       alert('PHP path is not set!')

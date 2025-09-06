@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from 'electron'
+import { app, BrowserWindow, ipcMain } from 'electron'
 import path, { join } from 'path'
 import log from 'electron-log/main'
 
@@ -119,4 +119,19 @@ app.on('window-all-closed', () => {
 
 app.on('before-quit', async () => {
   await lsp.shutdown()
+})
+
+ipcMain.on('lsp.restart', async event => {
+  console.log('Received request to restart LSP server.')
+
+  try {
+    await lsp.shutdown()
+    console.log('Previous LSP server shut down. Restarting...')
+    await lsp.init()
+    console.log('LSP server restarted successfully.')
+    event.sender.send('lsp.restart.success')
+  } catch (error) {
+    console.error('Failed to restart LSP server:', error)
+    event.sender.send('lsp.restart.error', error?.message)
+  }
 })
