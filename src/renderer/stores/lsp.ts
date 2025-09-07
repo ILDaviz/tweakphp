@@ -6,10 +6,6 @@ export type LspStatus = 'connected' | 'connecting' | 'disconnected'
 export const useLspStore = defineStore('lsp', () => {
   const status = ref<LspStatus>('disconnected')
 
-  function setStatus(newStatus: LspStatus) {
-    status.value = newStatus
-  }
-
   function setConnected() {
     status.value = 'connected'
   }
@@ -22,5 +18,5 @@ export const useLspStore = defineStore('lsp', () => {
     status.value = 'disconnected'
   }
 
-  return { status, setStatus, setConnected, setConnecting, setDisconnected }
+  return { status, setConnected, setConnecting, setDisconnected }
 })
