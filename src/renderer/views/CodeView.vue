@@ -16,9 +16,6 @@
   import 'splitpanes/dist/splitpanes.css'
   import StackedOutput from '../components/StackedOutput.vue'
   import { useLodaersStore } from '../stores/loaders'
-  import ExclamationCircle from '@/components/icons/ExclamationCircle.vue'
-  import ArrowPathRoundedSquare from '@/components/icons/ArrowPathRoundedSquare.vue'
-  import CheckCircle from '@/components/icons/CheckCircle.vue'
 
   const settingsStore = useSettingsStore()
   const executeStore = useExecuteStore()
@@ -352,19 +349,13 @@
         @click="handleLspReconnect"
       >
         <template v-if="lspStore.status === 'connected'">
-          <div class="flex items-center justify-center bg-green-500 rounded-full size-4">
-            <CheckCircle class="size-4 shrink-0 text-green-800" />
-          </div>
+          <div class="flex items-center justify-center bg-green-500 rounded-full size-3"></div>
         </template>
         <template v-else-if="lspStore.status === 'connecting'">
-          <div class="flex items-center justify-center bg-yellow-500 rounded-full size-4">
-            <ArrowPathRoundedSquare class="w-3 h-3 shrink-0 text-yellow-800 animate-spin" />
-          </div>
+          <div class="flex items-center justify-center bg-yellow-500 rounded-full size-3"></div>
         </template>
         <template v-else-if="lspStore.status === 'disconnected'">
-          <div class="flex items-center justify-center bg-red-500 rounded-full size-4">
-            <ExclamationCircle class="size-4 shrink-0 text-red-800" />
-          </div>
+          <div class="flex items-center justify-center bg-red-500 rounded-full size-3"></div>
         </template>
       </div>
       <div class="px-2 flex gap-1 w-1/2 items-center">
