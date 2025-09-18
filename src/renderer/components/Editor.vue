@@ -7,10 +7,12 @@
   import { initVimMode } from 'monaco-vim'
   import { installOutputLanguage, installPHPLanguage, installThemes } from '../editor'
   import { useSettingsStore } from '../stores/settings'
+  import { useLspStore } from '../stores/lsp'
   import { useTabsStore } from '../stores/tabs'
   import { useDebounceFn } from '@vueuse/core'
 
   const settingsStore = useSettingsStore()
+  const lspStore = useLspStore()
   const tabsStore = useTabsStore()
 
   // Props
@@ -199,6 +201,8 @@
   })
 
   onBeforeUnmount(async () => {
+    lspStore.setDisconnected()
+
     if (props.enableHistory) {
       window.historyApi.removeAllListeners()
     }
@@ -242,8 +246,18 @@
     }
   }
 
+  const reconnectLsp = async () => {
+    if (languageClient && languageClient.isRunning()) {
+      await languageClient.stop()
+      await languageClient.dispose()
+    }
+
+    await createWebSocketClient(`ws://127.0.0.1:${import.meta.env.VITE_LSP_WEBSOCKET_PORT}`)
+  }
+
   const createWebSocketClient = (url: string) => {
     return new Promise<void>((resolve, reject) => {
+      lspStore.setConnecting()
       const webSocket = new WebSocket(url)
 
       webSocket.onopen = async () => {
@@ -262,7 +276,9 @@
 
         try {
           await languageClient.start()
+          lspStore.setConnected()
         } catch (e) {
+          lspStore.setDisconnected()
           // reject(error)
         }
 
@@ -274,7 +290,12 @@
       // }
 
       webSocket.onerror = error => {
+        lspStore.setDisconnected()
         reject(error)
+      }
+
+      webSocket.onclose = () => {
+        lspStore.setDisconnected()
       }
     })
   }
@@ -307,6 +328,7 @@
   defineExpose({
     updateValue,
     focusEditor,
+    reconnectLsp,
   })
 </script>
 

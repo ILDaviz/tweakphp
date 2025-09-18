@@ -2,7 +2,8 @@
   import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
   import { useExecuteStore } from '../stores/execute'
   import { useTabsStore } from '../stores/tabs'
-  import { useVaporStore } from '../stores/vapor.ts'
+  import { useVaporStore } from '../stores/vapor'
+  import { useLspStore } from '../stores/lsp'
   import Container from '../components/Container.vue'
   import events from '../events'
   import { useSettingsStore } from '../stores/settings'
@@ -20,7 +21,8 @@
   const executeStore = useExecuteStore()
   const vaporStore = useVaporStore()
   const tabsStore = useTabsStore()
-  const codeEditor = ref(null)
+  const lspStore = useLspStore()
+  const codeEditor = ref<InstanceType<typeof Editor> | null>(null)
   const resultEditor = ref<InstanceType<typeof Editor> | null>(null)
   const loadersStore = useLodaersStore()
 
@@ -50,6 +52,23 @@
     const output = [...tab.value.result].reverse().find(item => item.output.trim() !== '')
     return output ? output.output : ''
   })
+
+  const lspStatusTooltip = computed(() => {
+    switch (lspStore.status) {
+      case 'connected':
+        return 'LSP Connected'
+      case 'connecting':
+        return 'LSP Connecting...'
+      case 'disconnected':
+        return 'LSP Disconnected (Click to reconnect)'
+    }
+  })
+
+  const handleLspReconnect = () => {
+    if (lspStore.status === 'disconnected') {
+      window.ipcRenderer.send('lsp.restart')
+    }
+  }
 
   const vaporRequestEnvironmentTab = () => {
     if (!tabsStore.current?.id || !tabsStore.current?.path) {
@@ -166,6 +185,13 @@
   }
 
   onMounted(async () => {
+    window.ipcRenderer.on('lsp.restart.success', () => {
+      console.log('LSP restart success, reconnecting editors...')
+      if (codeEditor.value) {
+        codeEditor.value.reconnectLsp()
+      }
+    })
+
     if (settingsStore.settings.php === '') {
       await router.push({ name: 'settings' })
       alert('PHP path is not set!')
@@ -317,6 +343,22 @@
         backgroundColor: settingsStore.colors.background,
       }"
     >
+      <div
+        class="flex items-center ml-2"
+        :class="{ 'cursor-pointer': lspStore.status === 'disconnected' }"
+        v-tippy="lspStatusTooltip"
+        @click="handleLspReconnect"
+      >
+        <template v-if="lspStore.status === 'connected'">
+          <div class="flex items-center justify-center bg-green-500 rounded-full size-3"></div>
+        </template>
+        <template v-else-if="lspStore.status === 'connecting'">
+          <div class="flex items-center justify-center bg-yellow-500 rounded-full size-3"></div>
+        </template>
+        <template v-else-if="lspStore.status === 'disconnected'">
+          <div class="flex items-center justify-center bg-red-500 rounded-full size-3"></div>
+        </template>
+      </div>
       <div class="px-2 flex gap-1 w-1/2 items-center">
         <div class="whitespace-nowrap">PHP {{ tab.info.php_version }}</div>
       </div>
