@@ -9,7 +9,6 @@
   import { useSettingsStore } from '../stores/settings'
   import { useLspStore } from '../stores/lsp'
   import { useTabsStore } from '../stores/tabs'
-  import { useDebounceFn } from '@vueuse/core'
 
   const settingsStore = useSettingsStore()
   const lspStore = useLspStore()
@@ -61,8 +60,6 @@
     }
     window.historyApi.add(tabId, code, cursor)
   }
-
-  const debouncedSaveHistory = useDebounceFn(saveHistoryNow, 500)
 
   let languageClient: MonacoLanguageClient | null = null
   let editor: monaco.editor.IStandaloneCodeEditor | null = null
@@ -127,7 +124,7 @@
 
           const currentPosition = editor!.getPosition()
           if (currentPosition) {
-            debouncedSaveHistory(tabsStore.current?.id, currentValue, currentPosition)
+            saveHistoryNow(tabsStore.current?.id, currentValue, currentPosition)
           }
         })
 
