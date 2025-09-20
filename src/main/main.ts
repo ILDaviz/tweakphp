@@ -16,6 +16,7 @@ import url from 'url'
 
 import { fixPath } from './utils/fix-path.ts'
 import { isWindows } from './system/platform.ts'
+import { AICompletionService } from './ai-completion-service.ts'
 
 fixPath()
 
@@ -135,3 +136,13 @@ ipcMain.on('lsp.restart', async event => {
     event.sender.send('lsp.restart.error', error?.message)
   }
 })
+
+const aiService = new AICompletionService();
+
+ipcMain.handle('ai:get-completion', async (event, { settings, context }) => {
+  try {
+    return await aiService.getCompletions(settings, context)
+  } catch (error: any) {
+    return { error: error.message };
+  }
+});

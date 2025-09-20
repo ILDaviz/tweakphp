@@ -59,3 +59,8 @@ body {
 #title-bar button {
   -webkit-app-region: no-drag;
 }
+
+.ghost-text {
+    color: #888888 !important;
+    opacity: 0.6;
+}

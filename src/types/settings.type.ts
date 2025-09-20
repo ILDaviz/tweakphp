@@ -11,4 +11,6 @@ export interface Settings {
   stackedDump: string
   windowWidth: number
   windowHeight: number
+  aiProvider: 'openai' | 'google' | 'openrouter';
+  aiApiKey: string | null
 }

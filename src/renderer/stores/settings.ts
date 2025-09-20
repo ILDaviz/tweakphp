@@ -46,6 +46,8 @@ export const useSettingsStore = defineStore('settings', () => {
     stackedDump: 'extended',
     windowWidth: 1100,
     windowHeight: 700,
+    aiProvider: 'openai',
+    aiApiKey: '',
   }
 
   const settings = ref<Settings>(defaultSettings)
@@ -59,7 +61,6 @@ export const useSettingsStore = defineStore('settings', () => {
   }
 
   const update = () => {
-    // clone settings json
     window.ipcRenderer.send('settings.store', {
       ...settings.value,
     })
