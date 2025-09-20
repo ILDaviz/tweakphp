@@ -1,8 +1,15 @@
-import Database from 'better-sqlite3'
-import path from 'path'
+import path from 'path';
+import os from 'os';
+import fs from 'fs';
+import Database from 'better-sqlite3';
 
-const dbPath: string =
-  process.env.NODE_ENV === 'development' ? './tweakphp.db' : path.join(process.resourcesPath, './tweakphp.db')
+const appDataDir = path.join(os.homedir(), '.tweakphp');
+
+if (!fs.existsSync(appDataDir)) {
+  fs.mkdirSync(appDataDir, { recursive: true });
+}
+
+const dbPath = path.join(appDataDir, 'tweakphp.db');
 
 console.log(`DB PATH: ${dbPath}`)
 
