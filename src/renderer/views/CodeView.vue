@@ -317,6 +317,7 @@
           }"
           :path="tab.path"
           :auto-focus="true"
+          :with-ai-completion="true"
         />
       </pane>
       <pane :size="tab.pane.result">

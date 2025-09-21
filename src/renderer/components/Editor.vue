@@ -1,11 +1,11 @@
 <script setup lang="ts">
-  import { onMounted, onBeforeUnmount, ref } from 'vue'
+  import { onBeforeUnmount, onMounted, ref } from 'vue'
   import * as monaco from 'monaco-editor'
   import { MonacoLanguageClient } from 'monaco-languageclient'
   import { toSocket, WebSocketMessageReader, WebSocketMessageWriter } from 'vscode-ws-jsonrpc'
   import { CloseAction, ErrorAction } from 'vscode-languageclient'
   import { initVimMode } from 'monaco-vim'
-  import { installPHPLanguage, installOutputLanguage, installThemes } from '../editor'
+  import { installOutputLanguage, installPHPLanguage, installThemes } from '../editor'
   import { useSettingsStore } from '../stores/settings'
   import { useLspStore } from '../stores/lsp'
   import { registerCompletion } from 'monacopilot'
@@ -38,6 +38,10 @@
       type: String,
     },
     autoFocus: {
+      type: Boolean,
+      default: false,
+    },
+    withAiCompletion: {
       type: Boolean,
       default: false,
     },
@@ -92,15 +96,15 @@
 
       editor.setModel(editorModel)
 
-      registerCompletion(monaco, editor, {
-        language: 'php',
-        trigger: 'onTyping',
-        requestHandler: async ({ body }) => {
-          const response = await window.ipcRenderer.invoke('ai:get-completion', { context: body })
-          console.log(response)
-          return response
-        },
-      })
+      if (props.withAiCompletion) {
+        registerCompletion(monaco, editor, {
+          language: 'php',
+          trigger: 'onTyping',
+          requestHandler: async ({ body }) => {
+            return await window.ipcRenderer.invoke('ai:get-completion', { context: body })
+          },
+        })
+      }
 
       editor.onDidChangeModelContent(() => {
         if (editor) {

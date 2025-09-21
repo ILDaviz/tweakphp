@@ -3,7 +3,6 @@ import type { OpenRouterModel } from '../../types/ai/openrouter.type'
 
 /**
  * Use for fetching and managing OpenRouter models.
- * @returns {Object} Stato e funzioni per gestire i modelli OpenRouter.
  */
 export function useOpenRouter() {
   const models = ref<OpenRouterModel[]>([])
