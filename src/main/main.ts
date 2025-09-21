@@ -141,8 +141,10 @@ const aiService = new AICompletionService();
 
 ipcMain.handle('ai:get-completion', async (event, { settings, context }) => {
   try {
-    return await aiService.getCompletions(settings, context)
+    const completions = await aiService.getCompletions(settings, context);
+    return { completions: completions, error: null };
   } catch (error: any) {
-    return { error: error.message };
+    console.error("AI completion failed:", error);
+    return { completions: [], error: error.message };
   }
 });

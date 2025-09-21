@@ -30,18 +30,18 @@
         <li class="mx-3">|</li>
         <li
           class="cursor-pointer hover:text-primary-500"
-          :class="{ 'text-primary-500': route.params.tab === 'loaders' }"
-          @click="router.push({ name: 'settings', params: { tab: 'loaders' } })"
-        >
-          Loaders
-        </li>
-        <li class="mx-3">|</li>
-        <li
-          class="cursor-pointer hover:text-primary-500"
           :class="{ 'text-primary-500': route.params.tab === 'ai' }"
           @click="router.push({ name: 'settings', params: { tab: 'ai' } })"
         >
           AI Autocomplete
+        </li>
+        <li class="mx-3">|</li>
+        <li
+          class="cursor-pointer hover:text-primary-500"
+          :class="{ 'text-primary-500': route.params.tab === 'loaders' }"
+          @click="router.push({ name: 'settings', params: { tab: 'loaders' } })"
+        >
+          Loaders
         </li>
       </ul>
       <div class="py-10">

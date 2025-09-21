@@ -32,7 +32,8 @@ const defaultSettings: Settings = {
   stackedDump: 'extended',
   windowWidth: 1100,
   windowHeight: 700,
-  aiProvider: 'openai',
+  aiProvider: null,
+  aiModelId: null,
   aiApiKey: null,
 }
 
@@ -70,7 +71,8 @@ export const getSettings = () => {
       stackedDump: settingsJson.stackedDump || defaultSettings.stackedDump,
       windowWidth: settingsJson.windowWidth || defaultSettings.windowWidth,
       windowHeight: settingsJson.windowHeight || defaultSettings.windowHeight,
-      aiProvider: settingsJson.aiProvider || 'openai',
+      aiProvider: settingsJson.aiProvider || null,
+      aiModelId: settingsJson.aiModelId || null,
       aiApiKey: settingsJson.aiApiKey || null,
     }
   } else {

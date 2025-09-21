@@ -4,41 +4,26 @@
   import { useSettingsStore } from '../../stores/settings';
   import SelectInput from '../../components/SelectInput.vue';
   import TextInput from '../../components/TextInput.vue';
-  import { ref } from 'vue';
+  import { useOpenRouter } from '../../composables/useOpenrouter';
+  import { ref, onMounted } from 'vue';
 
   const saved = ref(false);
   const settingsStore = useSettingsStore();
 
-  async function getOpenRouterModels() {
-    try {
-      const response = await fetch('https://openrouter.ai/api/v1/models');
+  const { models, loading, error, fetchModels } = useOpenRouter();
 
-      if (!response.ok) {
-        throw new Error(`Errore HTTP: ${response.status}`);
-      }
-
-      const jsonResponse = await response.json();
-
-      const models = jsonResponse.data;
-
-      console.log(`Trovati ${models.length} modelli.`);
-
-      if (models.length > 0) {
-        console.log('Esempio di ID modello:', models[0].id);
-      }
-
-      const freeModels = models.filter(model => model.pricing.prompt === "0" && model.pricing.completion === "0");
-      console.log('Modelli Gratuiti:', freeModels.map(m => m.id));
-
-
-      return models;
-    } catch (error) {
-      console.error("Impossibile estrarre i modelli da OpenRouter:", error);
-      return [];
+  onMounted(() => {
+    if (settingsStore.settings.aiProvider === 'openrouter') {
+      fetchModels();
     }
-  }
+  });
 
-  getOpenRouterModels();
+  const onProviderChange = () => {
+    if (settingsStore.settings.aiProvider === 'openrouter') {
+      fetchModels();
+    }
+    saveSettings();
+  };
 
   const saveSettings = () => {
     saved.value = true;
@@ -63,14 +48,35 @@
       <SelectInput
         id="ai-provider"
         v-model="settingsStore.settings.aiProvider"
-        @change="saveSettings()"
+        @change="onProviderChange()"
         placeholder="Seleziona un provider"
       >
-        <option value="openai">OpenAI (ChatGPT)</option>
-        <option value="google">Google (Gemini)</option>
-        <option value="openrouter">Open Router</option>
+        <option value="openrouter">Openrouter</option>
       </SelectInput>
     </div>
+    <template v-if="settingsStore.settings.aiProvider === 'openrouter'">
+      <Divider class="mt-3" />
+      <div class="mt-3 grid grid-cols-2 items-center">
+        <div>Openrouter AI Models</div>
+        <div>
+          <SelectInput
+            id="ai-model"
+            v-model="settingsStore.settings.aiModelId"
+            @change="saveSettings()"
+            placeholder="Seleziona un modello"
+            :disabled="loading || !!error"
+          >
+            <option v-if="loading" value="" disabled>Caricamento modelli...</option>
+            <option v-for="model in models" :key="model.id" :value="model.id">
+              {{ model.name }}
+            </option>
+          </SelectInput>
+          <p v-if="error" class="text-xs text-red-500 mt-1">
+            Its impossible to fetch models: {{ error }}
+          </p>
+        </div>
+      </div>
+    </template>
     <Divider class="mt-3" />
     <div class="mt-3 grid grid-cols-2 items-center">
       <div>API Key</div>
@@ -79,12 +85,13 @@
         type="password"
         v-model="settingsStore.settings.aiApiKey"
         @change="saveSettings()"
-        placeholder="Inserisci la tua chiave API"
+        placeholder="Insert your API key here"
       />
     </div>
+
     <Divider class="mt-3" />
     <p class="text-xs opacity-70 mt-3">
-      La tua chiave API viene salvata localmente e usata solo per inviare richieste al provider scelto.
+      Your API key is stored locally and only used to send requests to the selected provider.
     </p>
   </div>
 </template>

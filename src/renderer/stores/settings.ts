@@ -46,7 +46,8 @@ export const useSettingsStore = defineStore('settings', () => {
     stackedDump: 'extended',
     windowWidth: 1100,
     windowHeight: 700,
-    aiProvider: 'openai',
+    aiProvider: 'openrouter',
+    aiModelId: '',
     aiApiKey: '',
   }
 
