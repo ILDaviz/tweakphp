@@ -1,37 +1,37 @@
 <script setup lang="ts">
-  import Title from '../../components/Title.vue';
-  import Divider from '../../components/Divider.vue';
-  import { useSettingsStore } from '../../stores/settings';
-  import SelectInput from '../../components/SelectInput.vue';
-  import TextInput from '../../components/TextInput.vue';
-  import { useOpenRouter } from '../../composables/useOpenrouter';
-  import { ref, onMounted } from 'vue';
+  import Title from '../../components/Title.vue'
+  import Divider from '../../components/Divider.vue'
+  import { useSettingsStore } from '../../stores/settings'
+  import SelectInput from '../../components/SelectInput.vue'
+  import TextInput from '../../components/TextInput.vue'
+  import { useOpenRouter } from '../../composables/useOpenrouter'
+  import { ref, onMounted } from 'vue'
 
-  const saved = ref(false);
-  const settingsStore = useSettingsStore();
+  const saved = ref(false)
+  const settingsStore = useSettingsStore()
 
-  const { models, loading, error, fetchModels } = useOpenRouter();
+  const { models, loading, error, fetchModels } = useOpenRouter()
 
   onMounted(() => {
     if (settingsStore.settings.aiProvider === 'openrouter') {
-      fetchModels();
+      fetchModels()
     }
-  });
+  })
 
   const onProviderChange = () => {
     if (settingsStore.settings.aiProvider === 'openrouter') {
-      fetchModels();
+      fetchModels()
     }
-    saveSettings();
-  };
+    saveSettings()
+  }
 
   const saveSettings = () => {
-    saved.value = true;
-    settingsStore.update();
+    saved.value = true
+    settingsStore.update()
     setTimeout(() => {
-      saved.value = false;
-    }, 2000);
-  };
+      saved.value = false
+    }, 2000)
+  }
 </script>
 
 <template>
@@ -71,9 +71,7 @@
               {{ model.name }}
             </option>
           </SelectInput>
-          <p v-if="error" class="text-xs text-red-500 mt-1">
-            Its impossible to fetch models: {{ error }}
-          </p>
+          <p v-if="error" class="text-xs text-red-500 mt-1">Its impossible to fetch models: {{ error }}</p>
         </div>
       </div>
     </template>

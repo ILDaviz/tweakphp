@@ -137,14 +137,12 @@ ipcMain.on('lsp.restart', async event => {
   }
 })
 
-const aiService = new AICompletionService();
+const aiService = new AICompletionService()
 
-ipcMain.handle('ai:get-completion', async (event, { settings, context }) => {
+ipcMain.handle('ai:get-completion', async (event, { context }) => {
   try {
-    const completions = await aiService.getCompletions(settings, context);
-    return { completions: completions, error: null };
+    return await aiService.getCompletions(context)
   } catch (error: any) {
-    console.error("AI completion failed:", error);
-    return { completions: [], error: error.message };
+    return { completion: [], error: error.message }
   }
-});
+})
