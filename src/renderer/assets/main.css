@@ -59,15 +59,3 @@ body {
 #title-bar button {
   -webkit-app-region: no-drag;
 }
-
-.ghost-text {
-  color: #888888 !important;
-  opacity: 0.6;
-}
-
-.ghost-text-thinking {
-  color: #ef4444 !important; /* Colore rosso (es. tailwind red-500) */
-  font-style: italic;
-  opacity: 0.7;
-  white-space: nowrap;
-}

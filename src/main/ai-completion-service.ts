@@ -22,8 +22,6 @@ export class AICompletionService {
   }> {
     const settings = getSettings()
     const context = completionMetadata.completionMetadata
-
-    console.log('AI CONTEXT:', context)
     if (!settings.aiApiKey) {
       return {
         completion: null,
