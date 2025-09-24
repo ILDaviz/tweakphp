@@ -6,6 +6,7 @@
   import TextInput from '../../components/TextInput.vue'
   import { useOpenRouter } from '../../composables/useOpenrouter'
   import { ref, onMounted } from 'vue'
+  import SwitchInput from '@/components/SwitchInput.vue'
 
   const saved = ref(false)
   const settingsStore = useSettingsStore()
@@ -43,6 +44,15 @@
       </span>
     </div>
     <Divider class="mt-3" />
+
+    <div class="mt-3 grid grid-cols-2 items-center">
+      <div>Active Ai Autocomplete</div>
+      <SwitchInput id="ai-status" v-model="settingsStore.settings.aiStatus" @update:model-value="saveSettings()">
+      </SwitchInput>
+    </div>
+
+    <Divider class="mt-3" />
+
     <div class="mt-3 grid grid-cols-2 items-center">
       <div>AI Provider</div>
       <SelectInput

@@ -9,6 +9,7 @@
   import { useSettingsStore } from '../stores/settings'
   import { useLspStore } from '../stores/lsp'
   import { registerCompletion } from 'monacopilot'
+  import ToastAlert from '@/components/ToastAlert.vue'
 
   const settingsStore = useSettingsStore()
   const lspStore = useLspStore()
@@ -49,6 +50,8 @@
 
   const editorContainer = ref(null)
   const vimMode = ref(null)
+
+  const errorAiCompletion = ref<string | null>(null)
 
   let languageClient: MonacoLanguageClient | null = null
   let editor: monaco.editor.IStandaloneCodeEditor | null = null
@@ -96,12 +99,15 @@
 
       editor.setModel(editorModel)
 
-      if (props.withAiCompletion) {
+      if (props.withAiCompletion && settingsStore.settings.aiStatus) {
         registerCompletion(monaco, editor, {
           language: 'php',
           trigger: 'onTyping',
           requestHandler: async ({ body }) => {
             return await window.ipcRenderer.invoke('ai:get-completion', { context: body })
+          },
+          onError: error => {
+            errorAiCompletion.value = error.message
           },
         })
       }
@@ -258,5 +264,12 @@
 </script>
 
 <template>
-  <div ref="editorContainer" class="w-full h-full"></div>
+  <div ref="editorContainer" class="w-full h-full">
+    <ToastAlert
+      :key="new Date().getTime()"
+      v-if="errorAiCompletion"
+      title="AI Autocomplete Error"
+      :message="errorAiCompletion"
+    />
+  </div>
 </template>
