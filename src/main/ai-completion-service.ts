@@ -16,6 +16,7 @@ interface AiCompletionMetadata {
 }
 
 export class AICompletionService {
+  // ... (the getCompletions method remains unchanged)
   public async getCompletions(completionMetadata: AiCompletionMetadata): Promise<{
     completion: string | null
     error: string | null
@@ -68,18 +69,141 @@ export class AICompletionService {
     }
   }
 
+  /**
+   * Determines if the user intends to generate code from a comment.
+   * This is true if the line immediately preceding the cursor is a comment
+   * and the current line is empty.
+   * @param context The current editor context.
+   */
+  private isCommentToCodeScenario(context: CompletionContext): boolean {
+    const lines = context.textBeforeCursor.split('\n')
+    if (lines.length < 2) {
+      return false // Not enough lines to have a preceding comment line.
+    }
+
+    const currentLine = lines[lines.length - 1]
+    const previousLine = lines[lines.length - 2].trim()
+
+    const isCurrentLineEmpty = currentLine.trim() === ''
+    // We only consider single-line comments for this scenario for simplicity.
+    const isPreviousLineAComment = previousLine.startsWith('//') || previousLine.startsWith('#')
+
+    return isCurrentLineEmpty && isPreviousLineAComment
+  }
+
+  /**
+   * Determines if the cursor is currently inside a comment block.
+   * @param context The current editor context.
+   * @returns `true` if the cursor is inside a comment, otherwise `false`.
+   */
+  private isInsideComment(context: CompletionContext): boolean {
+    const textBeforeCursor = context.textBeforeCursor
+
+    // Check for an unclosed multi-line comment block.
+    const lastMultiLineStart = textBeforeCursor.lastIndexOf('/*')
+    const lastMultiLineEnd = textBeforeCursor.lastIndexOf('*/')
+
+    if (lastMultiLineStart > lastMultiLineEnd) {
+      return true
+    }
+
+    // Check for a single-line comment on the current line.
+    const lines = textBeforeCursor.split('\n')
+    const currentLineBeforeCursor = lines[lines.length - 1] || ''
+    const singleLineCommentPos = Math.max(currentLineBeforeCursor.indexOf('//'), currentLineBeforeCursor.indexOf('#'))
+
+    return singleLineCommentPos !== -1
+  }
+
+  /**
+   * Builds an intelligent prompt based on the code context.
+   * It recognizes whether the user is writing a comment, writing code,
+   * or wants to generate code from a comment.
+   */
   private buildPrompt(context: CompletionContext): string {
-    return `
-      Please complete the following ${context.language} code:
-      Use modern ${context.language} practices and hooks where appropriate.
-      Your primary task is to complete the following ${context.language} code at the <cursor> marker.
-      Analyze the context of the code before and after the cursor to provide the most logical and accurate completion.
-      Provide ONLY the raw ${context.language} code for the completion. Do not include any comments, explanations, markdown formatting, or surrounding text <?php or ?> tags.
-      
-      Here is the current file content:
-      —--CODE START---
-      ${context.textBeforeCursor}<cursor>${context.textAfterCursor}
-      ---CODE END---`
+    const fullCodeWithCursor = `${context.textBeforeCursor}<cursor>${context.textAfterCursor}`
+
+    // Generate code from a comment
+    if (this.isCommentToCodeScenario(context)) {
+      const lines = context.textBeforeCursor.split('\n')
+      const commentLine = lines[lines.length - 2].trim()
+
+      return `
+You are an expert PHP developer assisting a user in TweakPHP, a code-tweaking tool similar to Tinker (REPL).
+Your task is to translate the following PHP comment into a single, executable line of PHP code.
+
+KEY INSTRUCTIONS:
+1. Generate only the PHP code that fulfills the request in the comment.
+2. The result must be pure code only. **DO NOT** include explanations, markdown, or <?php tags.
+3. Ensure the generated statement ends with a semicolon (;).
+
+COMMENT TO TRANSLATE:
+---START COMMENT---
+${commentLine}
+---END COMMENT---
+
+Analyze the existing code and provide the PHP code for the <cursor> position:
+---CODE START---
+${fullCodeWithCursor}
+---CODE END---
+`
+    }
+    // Complete a comment
+    else if (this.isInsideComment(context)) {
+      return `
+You are a PHP programming assistant. The user is writing a code comment.
+
+INSTRUCTIONS:
+1. Your sole task is to complete the comment in a natural, concise, and helpful way.
+2. **If the comment already has an opening tag (like // or /*), do not add a new one.** Your output should be the content that follows.
+3. Write in the same language the user started the comment in.
+4. **DO NOT** generate PHP code, but you may use code snippets as examples within the comment.
+5. If you believe the comment is already complete, close it with the corresponding closing marker (*/ for multi-line comments).
+
+Here is the code and the comment to complete (indicated by <cursor>):
+---CODE START---
+${fullCodeWithCursor}
+---CODE END---
+`
+    }
+    // Complete code (default)
+    else {
+      return `
+You are an expert PHP developer helping a user in TweakPHP, a code-tweaking tool similar to Tinker (REPL).
+Your goal is to provide a **brief, focused, and immediately executable** code completion.
+
+KEY INSTRUCTIONS:
+1. Provide **ONLY AND EXCLUSIVELY** the PHP code that should be inserted at the <cursor> marker.
+2. **DO NOT** repeat the code the user has already written.
+3. If your completion concludes an entire statement, include the final semicolon (;).
+4. **DO NOT** include explanations, comments, markdown, '<?php' or '?>' tags. The result must be pure code only. The result must be pure, raw code only.
+5. **DO NOT** include the <cursor> marker in your output.
+6. The suggested code must be syntactically valid to continue the existing line or code block.
+7. If the completion is ambiguous, provide the most likely and briefest possible completion.
+8. **IMPORTANT**: If the user has already typed an operator like -> or ::, your task is to provide only what comes after it.
+
+Example 1:
+- User Input: $user = new User(); $user->get<cursor>
+- Expected Output: Name()
+
+Example 2:
+- User Input: str_re<cursor>
+- Expected Output: place()
+
+Example 3:
+- User Input: echo "Hello"<cursor>
+- Expected Output: ;
+
+Example 4:
+- User Input: $casa = App\\Models\\Casa::query()-<cursor>
+- Expected Output: >where('id', 1)->first();
+
+Analyze the following code and provide the exact completion for the <cursor> position:
+---CODE START---
+${fullCodeWithCursor}
+---CODE END---
+`
+    }
   }
 
   private async fetchOpenRouter(apiKey: string, model: string, prompt: string): Promise<string> {
@@ -105,10 +229,12 @@ export class AICompletionService {
       })
 
       if (response.status !== 200) {
-        throw new Error('OpenRouter API error: ' + response.status + ' - ' + response.statusText)
+        const errorBody = await response.text()
+        throw new Error(`OpenRouter API error: ${response.status} - ${response.statusText}. Response: ${errorBody}`)
       }
 
-      return (await response.json()).choices[0].message.content
+      const jsonResponse = await response.json()
+      return jsonResponse?.choices?.[0]?.message?.content
     } catch (error) {
       throw error
     }

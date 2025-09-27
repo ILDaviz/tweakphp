@@ -66,7 +66,6 @@
       return
     }
     window.historyApi.add(tabId, code, cursor)
-
   }
 
   let languageClient: MonacoLanguageClient | null = null
@@ -186,6 +185,7 @@
         registerCompletion(monaco, editor, {
           language: 'php',
           trigger: 'onTyping',
+          enableCaching: false,
           requestHandler: async ({ body }) => {
             return await window.ipcRenderer.invoke('ai:get-completion', { context: body })
           },
