@@ -16,7 +16,6 @@ interface AiCompletionMetadata {
 }
 
 export class AICompletionService {
-  // ... (the getCompletions method remains unchanged)
   public async getCompletions(completionMetadata: AiCompletionMetadata): Promise<{
     completion: string | null
     error: string | null
@@ -78,14 +77,13 @@ export class AICompletionService {
   private isCommentToCodeScenario(context: CompletionContext): boolean {
     const lines = context.textBeforeCursor.split('\n')
     if (lines.length < 2) {
-      return false // Not enough lines to have a preceding comment line.
+      return false
     }
 
     const currentLine = lines[lines.length - 1]
     const previousLine = lines[lines.length - 2].trim()
 
     const isCurrentLineEmpty = currentLine.trim() === ''
-    // We only consider single-line comments for this scenario for simplicity.
     const isPreviousLineAComment = previousLine.startsWith('//') || previousLine.startsWith('#')
 
     return isCurrentLineEmpty && isPreviousLineAComment
@@ -99,7 +97,6 @@ export class AICompletionService {
   private isInsideComment(context: CompletionContext): boolean {
     const textBeforeCursor = context.textBeforeCursor
 
-    // Check for an unclosed multi-line comment block.
     const lastMultiLineStart = textBeforeCursor.lastIndexOf('/*')
     const lastMultiLineEnd = textBeforeCursor.lastIndexOf('*/')
 
@@ -107,7 +104,6 @@ export class AICompletionService {
       return true
     }
 
-    // Check for a single-line comment on the current line.
     const lines = textBeforeCursor.split('\n')
     const currentLineBeforeCursor = lines[lines.length - 1] || ''
     const singleLineCommentPos = Math.max(currentLineBeforeCursor.indexOf('//'), currentLineBeforeCursor.indexOf('#'))
@@ -197,6 +193,10 @@ Example 3:
 Example 4:
 - User Input: $casa = App\\Models\\Casa::query()-<cursor>
 - Expected Output: >where('id', 1)->first();
+
+Example 5:
+- User Input: return view('welcome')<cursor>
+- Expected Output: ;
 
 Analyze the following code and provide the exact completion for the <cursor> position:
 ---CODE START---
