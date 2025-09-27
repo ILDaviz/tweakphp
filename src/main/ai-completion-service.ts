@@ -132,7 +132,7 @@ export class AICompletionService {
 You are an expert PHP developer assisting a user in TweakPHP, a code-tweaking tool similar to Tinker (REPL).
 Your task is to translate the following PHP comment into a single, executable line of PHP code.
 
-KEY INSTRUCTIONS:
+INSTRUCTIONS:
 1. Generate only the PHP code that fulfills the request in the comment.
 2. The result must be pure code only. **DO NOT** include explanations, markdown, or <?php tags.
 3. Ensure the generated statement ends with a semicolon (;).
@@ -172,7 +172,7 @@ ${fullCodeWithCursor}
 You are an expert PHP developer helping a user in TweakPHP, a code-tweaking tool similar to Tinker (REPL).
 Your goal is to provide a **brief, focused, and immediately executable** code completion.
 
-KEY INSTRUCTIONS:
+INSTRUCTIONS:
 1. Provide **ONLY AND EXCLUSIVELY** the PHP code that should be inserted at the <cursor> marker.
 2. **DO NOT** repeat the code the user has already written.
 3. If your completion concludes an entire statement, include the final semicolon (;).
