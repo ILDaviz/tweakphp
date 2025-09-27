@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from 'electron'
+import { app, BrowserWindow, ipcMain } from 'electron'
 import path, { join } from 'path'
 import log from 'electron-log/main'
 
@@ -12,16 +12,17 @@ import * as updater from './system/updater.ts'
 import * as link from './system/link.ts'
 import * as tray from './system/tray.ts'
 
+import { runMigrations } from './db/migration.ts'
+import { initCodeHistory } from './tools/code-history.ts'
+import { initSnippet } from './tools/snipetts.ts'
+
 import url from 'url'
 
 import { fixPath } from './utils/fix-path.ts'
 import { isWindows } from './system/platform.ts'
 
-import { runMigrations } from './db/migration.ts'
-import { initSnippet } from './tools/snipetts.ts'
-import { initCodeHistory } from './tools/code-history.ts'
-
 runMigrations()
+
 fixPath()
 
 Object.assign(console, log.functions)
@@ -124,6 +125,21 @@ app.on('window-all-closed', () => {
 
 app.on('before-quit', async () => {
   await lsp.shutdown()
+})
+
+ipcMain.on('lsp.restart', async event => {
+  console.log('Received request to restart LSP server.')
+
+  try {
+    await lsp.shutdown()
+    console.log('Previous LSP server shut down. Restarting...')
+    await lsp.init()
+    console.log('LSP server restarted successfully.')
+    event.sender.send('lsp.restart.success')
+  } catch (error) {
+    console.error('Failed to restart LSP server:', error)
+    event.sender.send('lsp.restart.error', error?.message)
+  }
 })
 
 initSnippet()

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-  import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
+  import { onBeforeUnmount, onMounted, ref } from 'vue'
   import * as monaco from 'monaco-editor'
   import { MonacoLanguageClient } from 'monaco-languageclient'
   import { toSocket, WebSocketMessageReader, WebSocketMessageWriter } from 'vscode-ws-jsonrpc'
@@ -7,20 +7,12 @@
   import { initVimMode } from 'monaco-vim'
   import { installOutputLanguage, installPHPLanguage, installThemes } from '../editor'
   import { useSettingsStore } from '../stores/settings'
+  import { useLspStore } from '../stores/lsp'
   import { useSnippetStore } from '../stores/snippet'
   import { useTabsStore } from '../stores/tabs'
 
-  function debounce(func: (...args: any[]) => void, timeout = 750) {
-    let timer: number
-    return (...args: any[]) => {
-      clearTimeout(timer)
-      timer = setTimeout(() => {
-        func.apply(this, args)
-      }, timeout)
-    }
-  }
-
   const settingsStore = useSettingsStore()
+  const lspStore = useLspStore()
   const tabsStore = useTabsStore()
   const snippetStore = useSnippetStore()
 
@@ -84,13 +76,13 @@
 
   const isUpdatingFromHistory = ref(false)
 
-  const saveHistory = debounce((tabId: number, code: string, cursor: monaco.IPosition) => {
+  function saveHistoryNow(tabId: number, code: string, cursor: monaco.IPosition) {
     if (!window.historyApi) {
       console.warn('History API is not available')
       return
     }
     window.historyApi.add(tabId, code, cursor)
-  }, 500)
+  }
 
   let languageClient: MonacoLanguageClient | null = null
   let editor: monaco.editor.IStandaloneCodeEditor | null = null
@@ -148,18 +140,18 @@
         })
 
         editor.onDidChangeModelContent(() => {
-          if (isUpdatingFromHistory.value) return;
+          if (isUpdatingFromHistory.value) return
 
-          const currentValue = editor!.getValue();
-          emit('update:value', currentValue);
+          const currentValue = editor!.getValue()
+          emit('update:value', currentValue)
 
-          const currentPosition = editor!.getPosition();
+          const currentPosition = editor!.getPosition()
           if (currentPosition) {
-            saveHistory(tabsStore.current?.id, currentValue, currentPosition);
+            saveHistoryNow(tabsStore.current?.id, currentValue, currentPosition)
           }
         })
 
-        window.historyApi.onUndoReply((data) => {
+        window.historyApi.onUndoReply(data => {
           if (editor) {
             isUpdatingFromHistory.value = true
             editor.setValue(data.code)
@@ -172,7 +164,7 @@
           }
         })
 
-        window.historyApi.onRedoReply((data) => {
+        window.historyApi.onRedoReply(data => {
           if (editor) {
             isUpdatingFromHistory.value = true
             editor.setValue(data.code)
@@ -184,9 +176,11 @@
             isUpdatingFromHistory.value = false
           }
         })
+
+        saveHistoryNow(tabsStore.current?.id, props.value, { lineNumber: 1, column: 1 })
       } else {
         editor.onDidChangeModelContent(() => {
-          emit('update:value', editor!.getValue());
+          emit('update:value', editor!.getValue())
         })
       }
 
@@ -248,8 +242,8 @@
   })
 
   onBeforeUnmount(async () => {
+    lspStore.setDisconnected()
 
-    // PULIZIA DEI LISTENER IPC
     if (props.enableHistory) {
       window.historyApi.removeAllListeners()
     }
@@ -275,14 +269,14 @@
     }
   }
 
-  watch(
-    () => props.value,
-    newValue => {
-      if (editor && editor.getValue() !== newValue) {
-        editor.setValue(newValue)
-      }
-    }
-  )
+  // watch(
+  //   () => props.value,
+  //   newValue => {
+  //     if (editor && editor.getValue() !== newValue) {
+  //       editor.setValue(newValue)
+  //     }
+  //   }
+  // )
 
   const focusEditor = () => {
     if (editor) {
@@ -302,8 +296,18 @@
     }
   }
 
+  const reconnectLsp = async () => {
+    if (languageClient && languageClient.isRunning()) {
+      await languageClient.stop()
+      await languageClient.dispose()
+    }
+
+    await createWebSocketClient(`ws://127.0.0.1:${import.meta.env.VITE_LSP_WEBSOCKET_PORT}`)
+  }
+
   const createWebSocketClient = (url: string) => {
     return new Promise<void>((resolve, reject) => {
+      lspStore.setConnecting()
       const webSocket = new WebSocket(url)
 
       webSocket.onopen = async () => {
@@ -322,7 +326,9 @@
 
         try {
           await languageClient.start()
+          lspStore.setConnected()
         } catch (e) {
+          lspStore.setDisconnected()
           // reject(error)
         }
 
@@ -334,7 +340,12 @@
       // }
 
       webSocket.onerror = error => {
+        lspStore.setDisconnected()
         reject(error)
+      }
+
+      webSocket.onclose = () => {
+        lspStore.setDisconnected()
       }
     })
   }
@@ -367,6 +378,7 @@
   defineExpose({
     updateValue,
     focusEditor,
+    reconnectLsp,
     insertSnippet,
   })
 </script>

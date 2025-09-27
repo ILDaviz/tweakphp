@@ -1,16 +1,18 @@
 {
   "name": "tweakphp",
   "description": "Tweak your PHP code",
+  "private": false,
   "author": {
     "name": "Saeed Vaziry",
     "email": "mr.saeedvaziry@gmail.com"
   },
-  "version": "0.7.2",
+  "version": "0.10.0",
   "main": "dist/main.js",
   "scripts": {
+    "postinstall": "electron-builder install-app-deps",
     "dev": "concurrently \"vite\" \"node build.js --dev && electron .\"",
     "update-clients": "node ./scripts/update-clients.js",
-    "build": "vite build && electron-rebuild -f -w better-sqlite3 && node build.js --prod",
+    "build": "vite build && node build.js --prod",
     "build-mac": "npm run build && electron-builder --mac --universal",
     "build-linux": "npm run build && electron-builder --linux",
     "build-win": "npm run build && electron-builder --win",
@@ -25,8 +27,7 @@
     "appId": "com.tweakphp.app",
     "productName": "TweakPHP",
     "files": [
-      "**/*",
-      "node_modules/**/*"
+      "**/*"
     ],
     "extraResources": [
       "build/*",
@@ -52,7 +53,7 @@
     "linux": {
       "executableName": "tweakphp",
       "description": "Tweak your PHP code easily",
-      "icon": "./build/icon.icns",
+      "icon": "./build/icon.png",
       "target": [
         {
           "target": "AppImage",
@@ -66,7 +67,7 @@
       ],
       "desktop": {
         "Name": "TweakPHP",
-        "icon": "./build/icon.icns",
+        "icon": "./build/icon.png",
         "Comment": "Tweak your PHP code easily",
         "Categories": "Development"
       },
@@ -106,6 +107,11 @@
     },
     "afterSign": "scripts/notarize.js"
   },
+  "dependencies": {
+    "better-sqlite3": "^12.1.1",
+    "js-yaml": "^4.1.0",
+    "reka-ui": "^2.4.1"
+  },
   "devDependencies": {
     "@codingame/esbuild-import-meta-url-plugin": "~1.0.2",
     "@codingame/monaco-vscode-configuration-service-override": "~7.0.7",
@@ -135,11 +141,10 @@
     "@vueuse/core": "^13.4.0",
     "adm-zip": "^0.5.16",
     "autoprefixer": "^10.4.19",
-    "better-sqlite3": "^12.1.1",
     "bufferutil": "^4.0.8",
     "concurrently": "^9.1.2",
     "dotenv": "^16.4.7",
-    "electron": "^33.2.1",
+    "electron": "^35.7.5",
     "electron-builder": "^25.1.8",
     "electron-log": "^5.2.4",
     "electron-notarize": "^1.2.2",
@@ -148,7 +153,6 @@
     "express": "^4.21.0",
     "fs-extra": "^11.2.0",
     "glob": "^11.0.0",
-    "js-yaml": "^4.1.0",
     "monaco-editor": "npm:@codingame/monaco-vscode-editor-api@~7.0.7",
     "monaco-editor-wrapper": "~5.4.0",
     "monaco-languageclient": "~8.7.0",
@@ -157,7 +161,6 @@
     "pinia": "^2.1.7",
     "postcss": "^8.4.38",
     "prettier": "^3.2.5",
-    "radix-vue": "^1.9.17",
     "semver": "^7.6.3",
     "shell-env": "^4.0.1",
     "splitpanes": "^3.1.5",
@@ -165,9 +168,8 @@
     "tailwindcss": "^3.4.3",
     "tippy.js": "^6.3.7",
     "typescript": "^5.2.2",
-    "unplugin-vue-components": "^28.7.0",
     "utf-8-validate": "^5.0.10",
-    "vite": "^6.3.1",
+    "vite": "^6.3.6",
     "vscode-jsonrpc": "^8.2.1",
     "vscode-languageclient": "^9.0.1",
     "vscode-languageserver": "^9.0.1",

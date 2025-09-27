@@ -56,6 +56,7 @@
     auth_type: 'key',
     password: '',
     privateKey: '',
+    passphrase: '',
     path: '',
     php: undefined,
     client_path: undefined,
@@ -170,6 +171,11 @@
         <div>Password</div>
         <TextInput id="password" type="password" v-model="form.password" />
       </div>
+      <div v-if="form.auth_type === 'key'" class="grid grid-cols-2 items-center">
+        <div>Passphrase</div>
+        <TextInput id="passphrase" type="password" v-model="form.passphrase" />
+      </div>
+      <Divider v-if="form.auth_type === 'key'" />
       <div v-if="form.auth_type === 'key'" class="grid grid-cols-2 items-center">
         <div>Private Key Path</div>
         <TextInput
