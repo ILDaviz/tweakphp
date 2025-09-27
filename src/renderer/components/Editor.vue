@@ -184,7 +184,7 @@
       if (props.withAiCompletion && settingsStore.settings.aiStatus) {
         registerCompletion(monaco, editor, {
           language: 'php',
-          trigger: 'onTyping',
+          trigger: 'onIdle',
           enableCaching: false,
           requestHandler: async ({ body }) => {
             return await window.ipcRenderer.invoke('ai:get-completion', { context: body })
