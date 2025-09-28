@@ -81,18 +81,21 @@ export class AICompletionService {
    * @param context The current editor context.
    */
   private isCommentToCodeScenario(context: CompletionContext): boolean {
-    const lines = context.textBeforeCursor.split('\n')
-    if (lines.length < 2) {
-      return false
+    const lines = context.textBeforeCursor.split('\n');
+
+    const currentLine = lines[lines.length - 1];
+    if (currentLine.trim() !== '') {
+      return false;
     }
 
-    const currentLine = lines[lines.length - 1]
-    const previousLine = lines[lines.length - 2].trim()
+    for (let i = lines.length - 2; i >= 0; i--) {
+      const lastMeaningfulLine = lines[i].trim();
+      if (lastMeaningfulLine !== '') {
+        return lastMeaningfulLine.startsWith('//') || lastMeaningfulLine.startsWith('#');
+      }
+    }
 
-    const isCurrentLineEmpty = currentLine.trim() === ''
-    const isPreviousLineAComment = previousLine.startsWith('//') || previousLine.startsWith('#')
-
-    return isCurrentLineEmpty && isPreviousLineAComment
+    return false;
   }
 
   /**
@@ -174,11 +177,23 @@ USER INFO:
 ${frameworkGuidelines}
 
 INSTRUCTIONS:
-1. Your sole task is to complete the comment in a natural, concise, and helpful way.
+1. Your sole task is to provide **only the text that should be appended at the <cursor> position** to continue writing the existing comment.
 2. **If the comment already has an opening tag (like // or /*), do not add a new one.** Your output should be the content that follows.
 3. Write in the same language the user started the comment in.
 4. **DO NOT** generate PHP code, but you may use code snippets as examples within the comment.
 5. If you believe the comment is already complete, close it with the corresponding closing marker (*/ for multi-line comments).
+
+Example 1:
+- User Input: // This function will valida<cursor>
+- Expected Output: te the user's email address.
+
+Example 2:
+- User Input: // To get a random value, we can use the Str::<cursor>
+- Expected Output: random() method.
+
+Example 3:
+- User Input: /* This is a block comment that will describe<cursor>
+- Expected Output:  the purpose of the following class.
 
 Here is the code and the comment to complete (indicated by <cursor>):
 ---CODE START---
@@ -198,12 +213,13 @@ ${frameworkGuidelines}
 INSTRUCTIONS:
 1. Provide **ONLY AND EXCLUSIVELY** the PHP code that should be inserted at the <cursor> marker.
 2. **DO NOT** repeat the code the user has already written.
-3. If your completion concludes an entire statement, include the final semicolon (;).
+3. Add a semicolon (;) **ONLY IF** your completion finishes a statement that doesn't already have one.
 4. **DO NOT** include explanations, comments, markdown, '<?php' or '?>' tags. The result must be pure code only. The result must be pure, raw code only.
 5. **DO NOT** include the <cursor> marker in your output.
 6. The suggested code must be syntactically valid to continue the existing line or code block.
 7. If the completion is ambiguous, provide the most likely and briefest possible completion.
 8. **IMPORTANT**: If the user has already typed an operator like -> or ::, your task is to provide only what comes after it.
+9. **IMPORTANT**: If the line of code at the cursor is already syntactically complete (e.g., ends with ';', '{', or '}') and no further logical completion is possible, **you MUST return an empty string**.
 
 Example 1:
 - User Input: $user = new User(); $user->get<cursor>
@@ -224,6 +240,10 @@ Example 4:
 Example 5:
 - User Input: return view('welcome')<cursor>
 - Expected Output: ;
+
+Example 6:
+- User Input: Str::uuid();<cursor>
+- Expected Output:
 
 Analyze the following code and provide the exact completion for the <cursor> position:
 ---CODE START---
