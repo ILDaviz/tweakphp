@@ -1,5 +1,6 @@
 import fetch from 'node-fetch'
 import { getSettings } from './settings.ts'
+import { Tab } from '../types/tab.type.ts'
 
 interface CompletionContext {
   language: string
@@ -16,7 +17,10 @@ interface AiCompletionMetadata {
 }
 
 export class AICompletionService {
-  public async getCompletions(completionMetadata: AiCompletionMetadata): Promise<{
+  public async getCompletions(
+    completionMetadata: AiCompletionMetadata,
+    tab: Tab
+  ): Promise<{
     completion: string | null
     error: string | null
   }> {
@@ -29,7 +33,9 @@ export class AICompletionService {
       }
     }
 
-    const prompt = this.buildPrompt(context)
+    const prompt = this.buildPrompt(context, tab)
+
+    console.log('Generated Prompt:', prompt)
 
     try {
       switch (settings.aiProvider) {
@@ -116,8 +122,20 @@ export class AICompletionService {
    * It recognizes whether the user is writing a comment, writing code,
    * or wants to generate code from a comment.
    */
-  private buildPrompt(context: CompletionContext): string {
+  private buildPrompt(context: CompletionContext, tab: Tab): string {
     const fullCodeWithCursor = `${context.textBeforeCursor}<cursor>${context.textAfterCursor}`
+
+    const framework = tab.info.name?.toLowerCase() || 'plain php'
+    const frameworkVersion = tab.info.version ? ` v${tab.info.version}` : 'an unknown version of framework'
+    const phpVersion = tab.info.php_version ? `PHP v${tab.info.php_version}` : 'an unknown PHP version'
+
+    let frameworkGuidelines = `Follow best practices and conventions for ${framework}${frameworkVersion} and ${phpVersion} development.\n`
+    if (framework === 'laravel') {
+      frameworkGuidelines += `Leverage Laravel's core features, such as its helper functions, Facades, and Collection classes, to write idiomatic and efficient code. Prioritize Eloquent for database interactions and Blade for templating.\n`
+    }
+    if (framework === 'plain php') {
+      frameworkGuidelines += `Focus on writing secure, efficient, and maintainable PHP code. Adhere to PSR standards and best practices for modern PHP development.`
+    }
 
     // Generate code from a comment
     if (this.isCommentToCodeScenario(context)) {
@@ -127,6 +145,9 @@ export class AICompletionService {
       return `
 You are an expert PHP developer assisting a user in TweakPHP, a code-tweaking tool similar to Tinker (REPL).
 Your task is to translate the following PHP comment into a single, executable line of PHP code.
+
+USER INFO:
+${frameworkGuidelines}
 
 INSTRUCTIONS:
 1. Generate only the PHP code that fulfills the request in the comment.
@@ -149,6 +170,9 @@ ${fullCodeWithCursor}
       return `
 You are a PHP programming assistant. The user is writing a code comment.
 
+USER INFO:
+${frameworkGuidelines}
+
 INSTRUCTIONS:
 1. Your sole task is to complete the comment in a natural, concise, and helpful way.
 2. **If the comment already has an opening tag (like // or /*), do not add a new one.** Your output should be the content that follows.
@@ -167,6 +191,9 @@ ${fullCodeWithCursor}
       return `
 You are an expert PHP developer helping a user in TweakPHP, a code-tweaking tool similar to Tinker (REPL).
 Your goal is to provide a **brief, focused, and immediately executable** code completion.
+
+USER INFO:
+${frameworkGuidelines}
 
 INSTRUCTIONS:
 1. Provide **ONLY AND EXCLUSIVELY** the PHP code that should be inserted at the <cursor> marker.

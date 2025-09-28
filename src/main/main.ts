@@ -20,6 +20,7 @@ import url from 'url'
 import { fixPath } from './utils/fix-path.ts'
 import { isWindows } from './system/platform.ts'
 import { AICompletionService } from './ai-completion-service.ts'
+import { Tab } from '../types/tab.type.ts'
 
 runMigrations()
 
@@ -146,9 +147,9 @@ initCodeHistory()
 
 const aiService = new AICompletionService()
 
-ipcMain.handle('ai:get-completion', async (event, { context }) => {
+ipcMain.handle('ai:get-completion', async (event, { context, tab }) => {
   try {
-    return await aiService.getCompletions(context)
+    return await aiService.getCompletions(context, tab as Tab)
   } catch (error: any) {
     return { completion: [], error: error.message }
   }
