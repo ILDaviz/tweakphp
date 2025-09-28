@@ -81,21 +81,35 @@ export class AICompletionService {
    * @param context The current editor context.
    */
   private isCommentToCodeScenario(context: CompletionContext): boolean {
-    const lines = context.textBeforeCursor.split('\n');
+    const lines = context.textBeforeCursor.split('\n')
 
-    const currentLine = lines[lines.length - 1];
+    const currentLine = lines[lines.length - 1]
     if (currentLine.trim() !== '') {
-      return false;
+      return false
     }
 
     for (let i = lines.length - 2; i >= 0; i--) {
-      const lastMeaningfulLine = lines[i].trim();
+      const lastMeaningfulLine = lines[i].trim()
+
       if (lastMeaningfulLine !== '') {
-        return lastMeaningfulLine.startsWith('//') || lastMeaningfulLine.startsWith('#');
+        const isComment = lastMeaningfulLine.startsWith('//') || lastMeaningfulLine.startsWith('#')
+
+        if (!isComment) {
+          return false
+        }
+
+        let commentContent = ''
+        if (lastMeaningfulLine.startsWith('//')) {
+          commentContent = lastMeaningfulLine.substring(2)
+        } else {
+          commentContent = lastMeaningfulLine.substring(1)
+        }
+
+        return commentContent.trim() !== ''
       }
     }
 
-    return false;
+    return false
   }
 
   /**
@@ -157,6 +171,18 @@ INSTRUCTIONS:
 2. The result must be pure code only. **DO NOT** include explanations, markdown, or <?php tags.
 3. Ensure the generated statement ends with a semicolon (;).
 
+EXAMPLE 1:
+- Comment to translate: // Get all users from the database
+- Expected Output: App\\Models\\User::all();
+
+EXAMPLE 1:
+- Comment to translate: // Generate a collection of 5 unique UUIDs
+- Expected Output: collect()->times(5, fn () => (string) Illuminate\\Support\\Str::uuid());
+
+EXAMPLE 1:
+- Comment to translate: // Return the 'dashboard' view
+- Expected Output: return view('dashboard');
+
 COMMENT TO TRANSLATE:
 ---START COMMENT---
 ${commentLine}
@@ -183,17 +209,21 @@ INSTRUCTIONS:
 4. **DO NOT** generate PHP code, but you may use code snippets as examples within the comment.
 5. If you believe the comment is already complete, close it with the corresponding closing marker (*/ for multi-line comments).
 
-Example 1:
+EXAMPLE 1:
 - User Input: // This function will valida<cursor>
 - Expected Output: te the user's email address.
 
-Example 2:
+EXAMPLE 2:
 - User Input: // To get a random value, we can use the Str::<cursor>
 - Expected Output: random() method.
 
-Example 3:
+EXAMPLE 3:
 - User Input: /* This is a block comment that will describe<cursor>
 - Expected Output:  the purpose of the following class.
+
+EXAMPLE 4:
+- User Input: //<cursor>
+- Expected Output:  This comment describes the purpose of the following code.
 
 Here is the code and the comment to complete (indicated by <cursor>):
 ---CODE START---
@@ -221,19 +251,19 @@ INSTRUCTIONS:
 8. **IMPORTANT**: If the user has already typed an operator like -> or ::, your task is to provide only what comes after it.
 9. **IMPORTANT**: If the line of code at the cursor is already syntactically complete (e.g., ends with ';', '{', or '}') and no further logical completion is possible, **you MUST return an empty string**.
 
-Example 1:
+EXAMPLE 1:
 - User Input: $user = new User(); $user->get<cursor>
 - Expected Output: Name()
 
-Example 2:
+EXAMPLE 2:
 - User Input: str_re<cursor>
 - Expected Output: place()
 
-Example 3:
+EXAMPLE 3:
 - User Input: echo "Hello"<cursor>
 - Expected Output: ;
 
-Example 4:
+EXAMPLE 4:
 - User Input: $casa = App\\Models\\Casa::query()-<cursor>
 - Expected Output: >where('id', 1)->first();
 
