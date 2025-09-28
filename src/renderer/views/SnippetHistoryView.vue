@@ -13,6 +13,7 @@
   import { useTabsStore } from '../stores/tabs'
   import { refAutoReset } from '@vueuse/core'
   import events from '../events'
+  import ModalAdvance from '@/components/ModalAdvance.vue'
 
   const tabsStore = useTabsStore()
 
@@ -190,7 +191,7 @@
 
 <template>
   <Container>
-    <Splitpanes class="pb-6 max-h-[700px]">
+    <Splitpanes class="pb-6 max-h-[700px] gap-4">
       <pane class="!h-full">
         <div class="flex flex-col gap-4 ml-0.5 mr-2 py-4">
           <div class="relative">
@@ -357,6 +358,7 @@
         </div>
       </Pane>
     </Splitpanes>
+    <ModalAdvance />
   </Container>
 </template>
 

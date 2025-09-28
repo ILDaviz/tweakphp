@@ -10,15 +10,13 @@ export async function initSnippet() {
       try {
         const createdAt = new Date().toISOString()
         const saveSnippetSql = db.prepare(`
-            INSERT INTO snippets (name,code,tab_id,tab_name,tags,created_at,updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO snippets (name,code,tags,created_at,updated_at)
+            VALUES (?, ?, ?, ?, ?)
           `)
 
         const snippetSchema = z.object({
           code: z.string().min(1, 'Code cannot be empty'),
           name: z.string().min(1, 'Name cannot be empty'),
-          tab_id: z.number().nullable().optional(),
-          tab_name: z.string().nullable().optional(),
           tags: z.array(z.string()).optional(),
         })
 
@@ -35,8 +33,6 @@ export async function initSnippet() {
         const result = saveSnippetSql.run(
           snippet.name || '',
           snippet.code || '',
-          snippet.tab_id || null,
-          snippet.tab_name || null,
           JSON.stringify(snippet.tags || []),
           createdAt,
           createdAt
@@ -46,8 +42,6 @@ export async function initSnippet() {
           id: result.lastInsertRowid as number,
           name: snippet.name || '',
           code: snippet.code || '',
-          tab_id: snippet.tab_id,
-          tab_name: snippet.tab_name,
           tags: snippet.tags ?? [],
           created_at: createdAt,
           updated_at: createdAt,
@@ -71,7 +65,7 @@ export async function initSnippet() {
       const updatedAt = new Date().toISOString()
       const updateSnippetSql = db.prepare(`
           UPDATE snippets
-          SET name = ?, code = ?, tab_id = ?, tab_name = ?, tags = ?, updated_at = ?
+          SET name = ?, code = ?, tags = ?, updated_at = ?
           WHERE id = ?
         `)
 
@@ -79,8 +73,6 @@ export async function initSnippet() {
         id: z.number().int().positive('ID must be a positive integer'),
         name: z.string().min(1, 'Name cannot be empty'),
         code: z.string().min(1, 'Code cannot be empty'),
-        tab_id: z.number().nullable().optional(),
-        tab_name: z.string().nullable().optional(),
         tags: z.array(z.string()).optional(),
       })
 
@@ -97,8 +89,6 @@ export async function initSnippet() {
       updateSnippetSql.run(
         snippet.name,
         snippet.code,
-        snippet.tab_id,
-        snippet.tab_name,
         JSON.stringify(snippet.tags || []),
         updatedAt,
         snippet.id
@@ -127,8 +117,6 @@ export async function initSnippet() {
       if (filter) {
         query += ' AND name LIKE @name COLLATE NOCASE'
         params.name = `%${filter}%`
-        query += ' OR tab_name LIKE @tab_name COLLATE NOCASE'
-        params.tab_name = `%${filter}%`
         query += ' OR tags LIKE @tags COLLATE NOCASE'
         params.tags = `%${filter}%`
         query += ' OR code LIKE @code COLLATE NOCASE'
@@ -141,8 +129,6 @@ export async function initSnippet() {
           id: row.id,
           name: row.name,
           code: row.code,
-          tab_id: row.tab_id || null,
-          tab_name: row.tab_name || null,
           tags: row.tags ? JSON.parse(row.tags) : [],
           created_at: row.created_at,
         })) as Snippet[],
