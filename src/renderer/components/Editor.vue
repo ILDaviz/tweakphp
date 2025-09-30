@@ -325,6 +325,8 @@
     reader: WebSocketMessageReader
     writer: WebSocketMessageWriter
   }) => {
+    const workspacePath = `${props.path}`
+
     return new MonacoLanguageClient({
       id: props.editorId,
       name: 'PHP Language Client',
@@ -333,7 +335,27 @@
         workspaceFolder: {
           index: props.editorId,
           name: 'workspace-' + props.editorId,
-          uri: monaco.Uri.file(`${props.path}`),
+          uri: monaco.Uri.file(workspacePath),
+        },
+        initializationOptions: {
+          storagePath:
+            (window.platformInfo.getPlatform() !== 'win32'
+              ? '/tmp/tweakphp-intelephense-'
+              : 'C:/Temp/tweakphp-intelephense-') + encodeURIComponent(workspacePath || ''),
+          licenceKey: settingsStore.settings.intelephenseLicenseKey || undefined,
+          environment: workspacePath,
+          clearCache: true,
+          files: {
+            maxSize: 100_000_000,
+            exclude: [
+              '**/.git/**',
+              '**/CVS/**',
+              '**/.DS_Store/**',
+              '**/node_modules/**',
+              '**/vendor/**/{Tests,tests}/**',
+              '**/vendor/**/vendor/**',
+            ],
+          },
         },
         errorHandler: {
           error: () => ({ action: ErrorAction.Continue }),

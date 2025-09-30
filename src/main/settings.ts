@@ -4,7 +4,6 @@ import * as lsp from './lsp/index'
 import { app, ipcMain } from 'electron'
 import { Settings } from '../types/settings.type'
 import os from 'os'
-import { isWindows } from './system/platform.ts'
 
 const homeDir = os.homedir()
 
@@ -32,6 +31,7 @@ const defaultSettings: Settings = {
   stackedDump: 'extended',
   windowWidth: 1100,
   windowHeight: 700,
+  intelephenseLicenseKey: '' as any,
   aiStatus: false,
   aiProvider: null,
   aiModelId: null,
@@ -41,7 +41,7 @@ const defaultSettings: Settings = {
 export const init = async () => {
   ipcMain.on('settings.store', async (_event: any, data: Settings) => {
     setSettings(data)
-    !isWindows() && (await lsp.init())
+    await lsp.init()
   })
 }
 
@@ -72,6 +72,7 @@ export const getSettings = () => {
       stackedDump: settingsJson.stackedDump || defaultSettings.stackedDump,
       windowWidth: settingsJson.windowWidth || defaultSettings.windowWidth,
       windowHeight: settingsJson.windowHeight || defaultSettings.windowHeight,
+      intelephenseLicenseKey: settingsJson.intelephenseLicenseKey || '',
       aiStatus: settingsJson.aiStatus || defaultSettings.aiStatus,
       aiProvider: settingsJson.aiProvider || null,
       aiModelId: settingsJson.aiModelId || null,

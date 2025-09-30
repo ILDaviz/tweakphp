@@ -6,7 +6,7 @@
     "name": "Saeed Vaziry",
     "email": "mr.saeedvaziry@gmail.com"
   },
-  "version": "0.10.0",
+  "version": "0.11.0",
   "main": "dist/main.js",
   "scripts": {
     "postinstall": "electron-builder install-app-deps",
@@ -55,6 +55,7 @@
       "description": "Tweak your PHP code easily",
       "icon": "./build/icon.png",
       "target": [
+        "rpm",
         {
           "target": "AppImage",
           "arch": [
@@ -73,6 +74,13 @@
       },
       "maintainer": "Saeed Vaziry",
       "category": "Development"
+    },
+    "rpm": {
+      "icon": "icon.ico",
+      "packageCategory": "Development",
+      "depends": [
+        "zlib"
+      ]
     },
     "deb": {
       "packageCategory": "Development",
@@ -109,6 +117,7 @@
   },
   "dependencies": {
     "better-sqlite3": "^12.1.1",
+    "intelephense": "^1.12.6",
     "js-yaml": "^4.1.0",
     "monacopilot": "^1.2.7",
     "reka-ui": "^2.4.1"
