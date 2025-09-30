@@ -1,6 +1,6 @@
 import fetch from 'node-fetch'
-import { getSettings } from './settings.ts'
-import { Tab } from '../types/tab.type.ts'
+import { getSettings } from '../settings.ts'
+import { Tab } from '../../types/tab.type.ts'
 
 interface CompletionContext {
   language: string
@@ -16,7 +16,7 @@ interface AiCompletionMetadata {
   completionMetadata: CompletionContext
 }
 
-export class AICompletionService {
+export class AiCompletion {
   public async getCompletions(
     completionMetadata: AiCompletionMetadata,
     tab: Tab
