@@ -33,7 +33,7 @@
           :class="{ 'text-primary-500': route.params.tab === 'ai' }"
           @click="router.push({ name: 'settings', params: { tab: 'ai' } })"
         >
-          AI Autocomplete
+          AI Completions
         </li>
         <li class="mx-3">|</li>
         <li

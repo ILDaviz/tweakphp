@@ -46,7 +46,7 @@
     <Divider class="mt-3" />
 
     <div class="mt-3 grid grid-cols-2 items-center">
-      <div>Active Ai Autocomplete</div>
+      <div>Active</div>
       <SwitchInput id="ai-status" v-model="settingsStore.settings.aiStatus" @update:model-value="saveSettings()">
       </SwitchInput>
     </div>
@@ -54,26 +54,26 @@
     <Divider class="mt-3" />
 
     <div class="mt-3 grid grid-cols-2 items-center">
-      <div>AI Provider</div>
+      <div>Provider</div>
       <SelectInput
         id="ai-provider"
         v-model="settingsStore.settings.aiProvider"
         @change="onProviderChange()"
-        placeholder="Seleziona un provider"
+        placeholder="Select the AI provider"
       >
-        <option value="openrouter">Openrouter</option>
+        <option value="openrouter">OpenRouter</option>
       </SelectInput>
     </div>
     <template v-if="settingsStore.settings.aiProvider === 'openrouter'">
       <Divider class="mt-3" />
       <div class="mt-3 grid grid-cols-2 items-center">
-        <div>Openrouter AI Models</div>
+        <div>Models</div>
         <div>
           <SelectInput
             id="ai-model"
             v-model="settingsStore.settings.aiModelId"
             @change="saveSettings()"
-            placeholder="Seleziona un modello"
+            placeholder="Select the AI Model"
             :disabled="loading || !!error"
           >
             <option v-if="loading" value="" disabled>Caricamento modelli...</option>

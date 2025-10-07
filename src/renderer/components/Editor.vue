@@ -380,7 +380,7 @@
     <ToastAlert
       :key="new Date().getTime()"
       v-if="errorAiCompletion"
-      title="AI Autocomplete Error"
+      title="AI Completions Error"
       :message="errorAiCompletion"
     />
   </div>
