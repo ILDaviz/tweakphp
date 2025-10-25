@@ -16,4 +16,5 @@ export interface Settings {
   aiProvider: string | null
   aiModelId: string | null
   aiApiKey: string | null
+  navigationDisplay?: string
 }

@@ -4,11 +4,19 @@
   import { useSettingsStore } from '../../stores/settings'
   import SelectInput from '../../components/SelectInput.vue'
   import TextInput from '../../components/TextInput.vue'
-  import { ref } from 'vue'
+  import { ref, onMounted } from 'vue'
   import UpdateApp from '../../components/UpdateApp.vue'
 
   const saved = ref(false)
   const settingsStore = useSettingsStore()
+
+  onMounted(() => {
+    window.ipcRenderer.on('settings.php-located', updatePhpSetting)
+  })
+
+  const updatePhpSetting = (newPhpSetting: string) => {
+    settingsStore.settings.php = newPhpSetting
+  }
 
   const saveSettings = () => {
     saved.value = true
@@ -113,6 +121,19 @@
       >
         <option value="compact">Compact</option>
         <option value="extended">Extended</option>
+      </SelectInput>
+    </div>
+    <Divider class="mt-3" />
+    <div class="mt-3 grid grid-cols-2 items-center">
+      <div>Navigation Display</div>
+      <SelectInput
+        id="navigation-display"
+        v-model="settingsStore.settings.navigationDisplay"
+        @change="saveSettings()"
+        placeholder="Select"
+      >
+        <option value="collapsed">Collapsed</option>
+        <option value="expanded">Expanded</option>
       </SelectInput>
     </div>
   </div>

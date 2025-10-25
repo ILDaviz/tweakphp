@@ -51,6 +51,7 @@ export const useSettingsStore = defineStore('settings', () => {
     aiProvider: 'openrouter',
     aiModelId: '',
     aiApiKey: '',
+    navigationDisplay: 'collapsed',
   }
 
   const settings = ref<Settings>(defaultSettings)
@@ -58,6 +59,8 @@ export const useSettingsStore = defineStore('settings', () => {
   const colors = computed(() => {
     return themeColors[settings.value.theme as keyof typeof themeColors]
   })
+
+  const isNavigationExpanded = computed(() => settings.value.navigationDisplay === 'expanded')
 
   const setSettings = (s: any) => {
     settings.value = s
@@ -79,5 +82,5 @@ export const useSettingsStore = defineStore('settings', () => {
     monaco.editor.defineTheme('rose-pine', typedRosePineTheme)
   }
 
-  return { settings, themes, setSettings, update, colors, defineEditorThemes }
+  return { settings, themes, setSettings, update, colors, isNavigationExpanded, defineEditorThemes }
 })
