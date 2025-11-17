@@ -347,9 +347,7 @@
     >
       <div
         class="flex items-center ml-2 cursor-pointer"
-        :class="[
-          settingsStore.isNavigationExpanded ? 'pl-[145px]' : ''
-        ]"
+        :class="[settingsStore.isNavigationExpanded ? 'pl-[145px]' : '']"
         v-tippy="lspStatusTooltip"
         @click="handleLspReconnect"
       >
