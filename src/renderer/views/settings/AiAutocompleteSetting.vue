@@ -52,6 +52,20 @@
       saved.value = false
     }, 2000)
   }
+  function resetAiPromptTemplateCompleteComment() {
+    settingsStore.settings.aiPromptTemplateCompleteComment = DEFAULT_PROMPT_COMPLETE_COMMENT
+    saveSettings()
+  }
+
+  function resetAiPromptTemplateGenerateCodeFromComment() {
+    settingsStore.settings.aiPromptTemplateGenerateCodeFromComment = DEFAULT_PROMPT_GENERATE_CODE_FROM_COMMENT
+    saveSettings()
+  }
+
+  function resetAiPromptTemplateCompleteCode() {
+    settingsStore.settings.aiPromptTemplateCompleteCode = DEFAULT_PROMPT_COMPLETE_CODE
+    saveSettings()
+  }
 </script>
 
 <template>
@@ -141,13 +155,7 @@
         :rows="8"
       />
       <div class="flex items-center gap-3 py-3">
-        <PrimaryButton
-          @click="
-            settingsStore.settings.aiPromptTemplateGenerateCodeFromComment = DEFAULT_PROMPT_GENERATE_CODE_FROM_COMMENT
-            saveSettings()
-          "
-          >Reset</PrimaryButton
-        >
+        <PrimaryButton @click="resetAiPromptTemplateGenerateCodeFromComment()">Reset</PrimaryButton>
       </div>
     </div>
 
@@ -166,13 +174,7 @@
         :rows="8"
       />
       <div class="flex items-center gap-3 py-3">
-        <PrimaryButton
-          @click="
-            settingsStore.settings.aiPromptTemplateCompleteComment = DEFAULT_PROMPT_COMPLETE_COMMENT
-            saveSettings()
-          "
-          >Reset</PrimaryButton
-        >
+        <PrimaryButton @click="resetAiPromptTemplateCompleteComment()">Reset</PrimaryButton>
       </div>
     </div>
 
@@ -191,13 +193,7 @@
         :rows="8"
       />
       <div class="flex items-center gap-3 py-3">
-        <PrimaryButton
-          @click="
-            settingsStore.settings.aiPromptTemplateCompleteCode = DEFAULT_PROMPT_COMPLETE_CODE
-            saveSettings()
-          "
-          >Reset</PrimaryButton
-        >
+        <PrimaryButton @click="resetAiPromptTemplateCompleteCode()">Reset</PrimaryButton>
       </div>
     </div>
   </div>
