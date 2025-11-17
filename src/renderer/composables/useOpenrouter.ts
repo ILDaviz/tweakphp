@@ -31,14 +31,18 @@ export function useOpenRouter() {
   }
 
   const freeModels = computed(() =>
-    models.value.filter(model => model.pricing.prompt === '0' && model.pricing.completion === '0')
+    models.value
+      .filter(model => model.pricing.prompt === '0' && model.pricing.completion === '0')
+      .sort((a, b) => a.name.localeCompare(b.name))
   )
 
   const formattedModels = computed(() =>
-    models.value.map(m => ({
-      ...m,
-      label: `${m.name} (Prompt: $${m.pricing.prompt}/1K, Completion: $${m.pricing.completion}/1K)`,
-    }))
+    models.value
+      .map(m => ({
+        ...m,
+        label: `${m.name} (Prompt: $${m.pricing.prompt}/1K, Completion: $${m.pricing.completion}/1K)`,
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name))
   )
 
   return {

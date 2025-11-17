@@ -16,5 +16,8 @@ export interface Settings {
   aiProvider: string | null
   aiModelId: string | null
   aiApiKey: string | null
+  aiPromptTemplateGenerateCodeFromComment: string | null
+  aiPromptTemplateCompleteComment: string | null
+  aiPromptTemplateCompleteCode: string | null
   navigationDisplay?: string
 }

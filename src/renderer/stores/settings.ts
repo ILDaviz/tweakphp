@@ -51,6 +51,9 @@ export const useSettingsStore = defineStore('settings', () => {
     aiProvider: 'openrouter',
     aiModelId: '',
     aiApiKey: '',
+    aiPromptTemplateGenerateCodeFromComment: '',
+    aiPromptTemplateCompleteComment: '',
+    aiPromptTemplateCompleteCode: '',
     navigationDisplay: 'collapsed',
   }
 

@@ -17,7 +17,7 @@
 </script>
 
 <template>
-  <Container class="pt-[38px]">
+  <Container class="pt-[38px] overflow-y-auto no-scrollbar">
     <div class="max-w-2xl mx-auto p-10">
       <ul class="w-full flex items-center py-3 border-b" :style="{ borderBottomColor: settingsStore.colors.border }">
         <li

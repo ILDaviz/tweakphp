@@ -7,6 +7,13 @@
   import { useOpenRouter } from '../../composables/useOpenrouter'
   import { ref, onMounted } from 'vue'
   import SwitchInput from '@/components/SwitchInput.vue'
+  import TextareaInput from '@/components/TextareaInput.vue'
+  import {
+    DEFAULT_PROMPT_COMPLETE_CODE,
+    DEFAULT_PROMPT_COMPLETE_COMMENT,
+    DEFAULT_PROMPT_GENERATE_CODE_FROM_COMMENT,
+  } from '../../../types/ai/prompts.ts'
+  import PrimaryButton from '@/components/PrimaryButton.vue'
 
   const saved = ref(false)
   const settingsStore = useSettingsStore()
@@ -16,6 +23,18 @@
   onMounted(() => {
     if (settingsStore.settings.aiProvider === 'openrouter') {
       fetchModels()
+    }
+
+    if (!settingsStore.settings.aiPromptTemplateGenerateCodeFromComment) {
+      settingsStore.settings.aiPromptTemplateGenerateCodeFromComment = DEFAULT_PROMPT_GENERATE_CODE_FROM_COMMENT
+    }
+
+    if (!settingsStore.settings.aiPromptTemplateCompleteComment) {
+      settingsStore.settings.aiPromptTemplateCompleteComment = DEFAULT_PROMPT_COMPLETE_COMMENT
+    }
+
+    if (!settingsStore.settings.aiPromptTemplateCompleteCode) {
+      settingsStore.settings.aiPromptTemplateCompleteCode = DEFAULT_PROMPT_COMPLETE_CODE
     }
   })
 
@@ -37,7 +56,7 @@
 
 <template>
   <div>
-    <div class="flex items-center justify-between">
+    <div class="flex items-center justify-between overscroll-y-contain">
       <Title>AI Completion</Title>
       <span :class="{ 'opacity-0': !saved, 'opacity-65': saved }" class="transition-all duration-300">
         Changes Saved
@@ -76,14 +95,18 @@
             placeholder="Select the AI Model"
             :disabled="loading || !!error"
           >
-            <option v-if="loading" value="" disabled>Caricamento modelli...</option>
+            <option v-if="loading" value="" disabled>Loading models...</option>
             <option v-for="model in models" :key="model.id" :value="model.id">
               {{ model.name }}
             </option>
           </SelectInput>
-          <p v-if="error" class="text-xs text-red-500 mt-1">Its impossible to fetch models: {{ error }}</p>
+          <p v-if="error" class="text-xs text-red-500 mt-1">It is impossible to fetch models: {{ error }}</p>
         </div>
       </div>
+      <p class="text-xs opacity-70 mt-3">
+        GPT-4o-mini is recommended. Larger models offer better performance but require more time for responses, making
+        autocompletion less immediate and useful.
+      </p>
     </template>
     <Divider class="mt-3" />
     <div class="mt-3 grid grid-cols-2 items-center">
@@ -101,5 +124,81 @@
     <p class="text-xs opacity-70 mt-3">
       Your API key is stored locally and only used to send requests to the selected provider.
     </p>
+
+    <Title class="mt-12">Customization prompt</Title>
+    <Divider class="mt-3" />
+
+    <div class="mt-3 grid grid-cols-1 items-start">
+      <div class="pt-2">Generate code from comment prompt template</div>
+      <p class="text-xs opacity-70 my-3">
+        This template is used when requesting the model to generate code starting from a comment. You can use it to have
+        the model create functions or classes based on specifications described in comments.
+      </p>
+      <TextareaInput
+        id="ai-prompt-template-generate-code-from-comment"
+        v-model="settingsStore.settings.aiPromptTemplateGenerateCodeFromComment"
+        @update:modelValue="saveSettings()"
+        :rows="8"
+      />
+      <div class="flex items-center gap-3 py-3">
+        <PrimaryButton
+          @click="
+            settingsStore.settings.aiPromptTemplateGenerateCodeFromComment = DEFAULT_PROMPT_GENERATE_CODE_FROM_COMMENT
+            saveSettings()
+          "
+          >Reset</PrimaryButton
+        >
+      </div>
+    </div>
+
+    <Divider class="mt-3" />
+
+    <div class="mt-3 grid grid-cols-1 items-start">
+      <div class="pt-2">Complete comment prompt template</div>
+      <p class="text-xs opacity-70 my-3">
+        This template is used when requesting the model to complete an existing comment. You can use it to have the
+        model suggest more detailed descriptions or additional explanations.
+      </p>
+      <TextareaInput
+        id="ai-prompt-template-complete-comment"
+        v-model="settingsStore.settings.aiPromptTemplateCompleteComment"
+        @update:modelValue="saveSettings()"
+        :rows="8"
+      />
+      <div class="flex items-center gap-3 py-3">
+        <PrimaryButton
+          @click="
+            settingsStore.settings.aiPromptTemplateCompleteComment = DEFAULT_PROMPT_COMPLETE_COMMENT
+            saveSettings()
+          "
+          >Reset</PrimaryButton
+        >
+      </div>
+    </div>
+
+    <Divider class="mt-3" />
+
+    <div class="mt-3 grid grid-cols-1 items-start">
+      <div class="pt-2">Complete code prompt template</div>
+      <p class="text-xs opacity-70 my-3">
+        This template is used when requesting the model to complete an existing code block. You can use it to have the
+        model suggest completions for functions or classes.
+      </p>
+      <TextareaInput
+        id="ai-prompt-template-complete-code"
+        v-model="settingsStore.settings.aiPromptTemplateCompleteCode"
+        @update:modelValue="saveSettings()"
+        :rows="8"
+      />
+      <div class="flex items-center gap-3 py-3">
+        <PrimaryButton
+          @click="
+            settingsStore.settings.aiPromptTemplateCompleteCode = DEFAULT_PROMPT_COMPLETE_CODE
+            saveSettings()
+          "
+          >Reset</PrimaryButton
+        >
+      </div>
+    </div>
   </div>
 </template>
