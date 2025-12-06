@@ -14,8 +14,10 @@
     DEFAULT_PROMPT_GENERATE_CODE_FROM_COMMENT,
   } from '../../../types/ai/prompts.ts'
   import PrimaryButton from '@/components/PrimaryButton.vue'
+  import ToastAlert from '@/components/ToastAlert.vue'
 
   const saved = ref(false)
+  const showToast = ref(false)
   const settingsStore = useSettingsStore()
 
   const { models, loading, error, fetchModels } = useOpenRouter()
@@ -47,11 +49,14 @@
 
   const saveSettings = () => {
     saved.value = true
+    showToast.value = true
     settingsStore.update()
     setTimeout(() => {
       saved.value = false
+      showToast.value = false
     }, 2000)
   }
+
   function resetAiPromptTemplateCompleteComment() {
     settingsStore.settings.aiPromptTemplateCompleteComment = DEFAULT_PROMPT_COMPLETE_COMMENT
     saveSettings()
@@ -70,11 +75,9 @@
 
 <template>
   <div>
+    <ToastAlert v-if="showToast" title="Settings Saved" />
     <div class="flex items-center justify-between overscroll-y-contain">
       <Title>AI Completion</Title>
-      <span :class="{ 'opacity-0': !saved, 'opacity-65': saved }" class="transition-all duration-300">
-        Changes Saved
-      </span>
     </div>
     <Divider class="mt-3" />
 
@@ -151,10 +154,10 @@
       <TextareaInput
         id="ai-prompt-template-generate-code-from-comment"
         v-model="settingsStore.settings.aiPromptTemplateGenerateCodeFromComment"
-        @update:modelValue="saveSettings()"
         :rows="8"
       />
       <div class="flex items-center gap-3 py-3">
+        <PrimaryButton @click="saveSettings()">Save</PrimaryButton>
         <PrimaryButton @click="resetAiPromptTemplateGenerateCodeFromComment()">Reset</PrimaryButton>
       </div>
     </div>
@@ -170,10 +173,10 @@
       <TextareaInput
         id="ai-prompt-template-complete-comment"
         v-model="settingsStore.settings.aiPromptTemplateCompleteComment"
-        @update:modelValue="saveSettings()"
         :rows="8"
       />
       <div class="flex items-center gap-3 py-3">
+        <PrimaryButton @click="saveSettings()">Save</PrimaryButton>
         <PrimaryButton @click="resetAiPromptTemplateCompleteComment()">Reset</PrimaryButton>
       </div>
     </div>
@@ -189,10 +192,10 @@
       <TextareaInput
         id="ai-prompt-template-complete-code"
         v-model="settingsStore.settings.aiPromptTemplateCompleteCode"
-        @update:modelValue="saveSettings()"
         :rows="8"
       />
       <div class="flex items-center gap-3 py-3">
+        <PrimaryButton @click="saveSettings()">Save</PrimaryButton>
         <PrimaryButton @click="resetAiPromptTemplateCompleteCode()">Reset</PrimaryButton>
       </div>
     </div>

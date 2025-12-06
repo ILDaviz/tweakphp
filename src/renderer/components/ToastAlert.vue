@@ -13,9 +13,9 @@
     }>(),
     {
       title: 'Title Here',
-      message: 'Message here',
+      message: '',
       autoDismiss: true,
-      dismissible: true,
+      dismissible: false,
       dismissLabel: 'Dismiss',
     }
   )
@@ -46,7 +46,7 @@
       <ToastTitle class="[grid-area:_title] mb-1 font-medium text-base">
         {{ title }}
       </ToastTitle>
-      <ToastDescription as-child>
+      <ToastDescription v-if="message" as-child>
         {{ message }}
       </ToastDescription>
       <ToastAction

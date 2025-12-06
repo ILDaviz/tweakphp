@@ -13,11 +13,11 @@ export interface Settings {
   windowHeight: number
   intelephenseLicenseKey?: string
   aiStatus: boolean
-  aiProvider: string | null
-  aiModelId: string | null
-  aiApiKey: string | null
-  aiPromptTemplateGenerateCodeFromComment: string | null
-  aiPromptTemplateCompleteComment: string | null
-  aiPromptTemplateCompleteCode: string | null
+  aiProvider: string
+  aiModelId: string
+  aiApiKey: string
+  aiPromptTemplateGenerateCodeFromComment: string
+  aiPromptTemplateCompleteComment: string
+  aiPromptTemplateCompleteCode: string
   navigationDisplay?: string
 }
