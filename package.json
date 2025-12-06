@@ -6,19 +6,17 @@
     "name": "Saeed Vaziry",
     "email": "mr.saeedvaziry@gmail.com"
   },
-  "version": "0.11.0",
+  "version": "0.12.1",
   "main": "dist/main.js",
   "scripts": {
     "postinstall": "electron-builder install-app-deps",
     "dev": "concurrently \"vite\" \"node build.js --dev && electron .\"",
     "update-clients": "node ./scripts/update-clients.js",
     "build": "vite build && node build.js --prod",
-    "build-mac-arm": "npm run build && electron-builder --mac --arm64",
-    "build-mac-intel": "npm run build && electron-builder --mac --x64",
+    "build-mac": "npm run build && electron-builder --mac --universal",
     "build-linux": "npm run build && electron-builder --linux",
     "build-win": "npm run build && electron-builder --win",
-    "publish-mac-arm": "npm run build && electron-builder --publish always --mac --arm64",
-    "publish-mac-intel": "npm run build && electron-builder --publish always --mac --x64",
+    "publish-mac": "npm run build && electron-builder --publish always --mac --universal",
     "publish-linux": "npm run build && electron-builder --publish always --linux",
     "publish-win": "npm run build && electron-builder --publish always --win",
     "preview": "vite preview",
@@ -78,7 +76,6 @@
       "category": "Development"
     },
     "rpm": {
-      "icon": "icon.ico",
       "packageCategory": "Development",
       "depends": [
         "zlib"
@@ -122,6 +119,7 @@
     "intelephense": "^1.12.6",
     "js-yaml": "^4.1.0",
     "monacopilot": "^1.2.7",
+    "js-yaml": "^4.1.1",
     "reka-ui": "^2.4.1"
   },
   "devDependencies": {
@@ -164,7 +162,7 @@
     "esbuild": "^0.25.0",
     "express": "^4.21.0",
     "fs-extra": "^11.2.0",
-    "glob": "^11.0.0",
+    "glob": "^11.1.0",
     "monaco-editor": "npm:@codingame/monaco-vscode-editor-api@~7.0.7",
     "monaco-editor-wrapper": "~5.4.0",
     "monaco-languageclient": "~8.7.0",
