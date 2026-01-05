@@ -2,37 +2,49 @@
   import Title from '../../components/Title.vue'
   import Divider from '../../components/Divider.vue'
   import { useSettingsStore } from '../../stores/settings'
+  import { useUpdateStore } from '../../stores/update'
   import SelectInput from '../../components/SelectInput.vue'
   import TextInput from '../../components/TextInput.vue'
-  import { ref } from 'vue'
+  import { ref, onMounted } from 'vue'
   import UpdateApp from '../../components/UpdateApp.vue'
+  import ToastAlert from '@/components/ToastAlert.vue'
 
   const saved = ref(false)
+  const showToast = ref(false)
   const settingsStore = useSettingsStore()
+  const updateStore = useUpdateStore()
+
+  onMounted(() => {
+    window.ipcRenderer.on('settings.php-located', updatePhpSetting)
+  })
+
+  const updatePhpSetting = (newPhpSetting: string) => {
+    settingsStore.settings.php = newPhpSetting
+  }
 
   const saveSettings = () => {
     saved.value = true
+    showToast.value = true
     settingsStore.update()
     setTimeout(() => {
       saved.value = false
+      showToast.value = false
     }, 2000)
   }
 </script>
 
 <template>
   <div>
+    <ToastAlert v-if="showToast" title="Settings Saved" />
     <div class="flex items-center justify-between">
       <Title>Settings</Title>
-      <span :class="{ 'opacity-0': !saved, 'opacity-65': saved }" class="transition-all duration-300">
-        Changes Saved
-      </span>
     </div>
     <Divider class="mt-3" />
     <div class="mt-3 grid grid-cols-2 items-center">
       <div>App version</div>
-      <div class="flex items-center justify-between">
-        {{ settingsStore.settings.version }}
-        <UpdateApp />
+      <div class="flex items-center justify-between w-full">
+        <span v-if="!updateStore.downloading">{{ settingsStore.settings.version }}</span>
+        <UpdateApp class="flex-1" />
       </div>
     </div>
     <Divider class="mt-3" />
@@ -86,6 +98,23 @@
       </SelectInput>
     </div>
     <Divider class="mt-3" />
+    <div class="mt-3 grid grid-cols-2 items-start">
+      <div>Intelephense License key</div>
+      <div class="flex flex-col gap-1">
+        <TextInput
+          id="intelephense-license-key"
+          v-model="settingsStore.settings.intelephenseLicenseKey"
+          @change="saveSettings()"
+          type="password"
+          placeholder="Optional — paste your license to enable premium features"
+          autocomplete="off"
+        />
+        <span class="text-[11px] opacity-60"
+          >Leave empty to use the free version. Changes restart the PHP language server.</span
+        >
+      </div>
+    </div>
+    <Divider class="mt-3" />
     <div class="mt-3 grid grid-cols-2 items-center">
       <div>Stacked Dump</div>
       <SelectInput
@@ -96,6 +125,19 @@
       >
         <option value="compact">Compact</option>
         <option value="extended">Extended</option>
+      </SelectInput>
+    </div>
+    <Divider class="mt-3" />
+    <div class="mt-3 grid grid-cols-2 items-center">
+      <div>Navigation Display</div>
+      <SelectInput
+        id="navigation-display"
+        v-model="settingsStore.settings.navigationDisplay"
+        @change="saveSettings()"
+        placeholder="Select"
+      >
+        <option value="collapsed">Collapsed</option>
+        <option value="expanded">Expanded</option>
       </SelectInput>
     </div>
   </div>

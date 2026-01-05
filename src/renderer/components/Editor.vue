@@ -10,6 +10,8 @@
   import { useLspStore } from '../stores/lsp'
   import { useSnippetStore } from '../stores/snippet'
   import { useTabsStore } from '../stores/tabs'
+  import { registerCompletion } from 'monacopilot'
+  import ToastAlert from '@/components/ToastAlert.vue'
 
   const settingsStore = useSettingsStore()
   const lspStore = useLspStore()
@@ -48,8 +50,13 @@
       type: Boolean,
       default: false,
     },
+    withAiCompletion: {
+      type: Boolean,
+      default: false,
+    },
   })
 
+  const errorAiCompletion = ref<string | null>(null)
   const insertSnippet = (snippetCode: string) => {
     if (!editor) {
       return;
@@ -72,10 +79,10 @@
   };
 
   const editorContainer = ref(null)
+
   const vimMode = ref(null)
 
   const isUpdatingFromHistory = ref(false)
-
   function saveHistoryNow(tabId: number, code: string, cursor: monaco.IPosition) {
     if (!window.historyApi) {
       console.warn('History API is not available')
@@ -218,6 +225,23 @@
 
       editor.setModel(editorModel)
 
+      if (props.withAiCompletion && settingsStore.settings.aiStatus) {
+        registerCompletion(monaco, editor, {
+          language: 'php',
+          trigger: 'onIdle',
+          enableCaching: false,
+          requestHandler: async ({ body }) => {
+            return await window.ipcRenderer.invoke('ai:get-completion', {
+              context: body,
+              tab: JSON.parse(JSON.stringify(tabsStore.current)),
+            })
+          },
+          onError: error => {
+            errorAiCompletion.value = error.message
+          },
+        })
+      }
+
       editor.onDidChangeModelContent(() => {
         if (editor) {
           emit('update:value', editor.getValue())
@@ -231,7 +255,7 @@
       if (window.platformInfo.getPlatform() !== 'win32' && !props.readonly && props.path && props.language === 'php') {
         const interval = setInterval(async () => {
           try {
-            await createWebSocketClient(`ws://127.0.0.1:${import.meta.env.VITE_LSP_WEBSOCKET_PORT}`)
+            await createWebSocketClient(`ws://127.0.0.1:${window.platformInfo.getLspPort()}`)
             clearInterval(interval)
           } catch (error) {
             console.error('WebSocket connection failed, retrying...', error)
@@ -302,7 +326,7 @@
       await languageClient.dispose()
     }
 
-    await createWebSocketClient(`ws://127.0.0.1:${import.meta.env.VITE_LSP_WEBSOCKET_PORT}`)
+    await createWebSocketClient(`ws://127.0.0.1:${window.platformInfo.getLspPort()}`)
   }
 
   const createWebSocketClient = (url: string) => {
@@ -354,6 +378,8 @@
     reader: WebSocketMessageReader
     writer: WebSocketMessageWriter
   }) => {
+    const workspacePath = `${props.path}`
+
     return new MonacoLanguageClient({
       id: props.editorId,
       name: 'PHP Language Client',
@@ -362,7 +388,27 @@
         workspaceFolder: {
           index: props.editorId,
           name: 'workspace-' + props.editorId,
-          uri: monaco.Uri.file(`${props.path}`),
+          uri: monaco.Uri.file(workspacePath),
+        },
+        initializationOptions: {
+          storagePath:
+            (window.platformInfo.getPlatform() !== 'win32'
+              ? '/tmp/tweakphp-intelephense-'
+              : 'C:/Temp/tweakphp-intelephense-') + encodeURIComponent(workspacePath || ''),
+          licenceKey: settingsStore.settings.intelephenseLicenseKey || undefined,
+          environment: workspacePath,
+          clearCache: true,
+          files: {
+            maxSize: 100_000_000,
+            exclude: [
+              '**/.git/**',
+              '**/CVS/**',
+              '**/.DS_Store/**',
+              '**/node_modules/**',
+              '**/vendor/**/{Tests,tests}/**',
+              '**/vendor/**/vendor/**',
+            ],
+          },
         },
         errorHandler: {
           error: () => ({ action: ErrorAction.Continue }),
@@ -384,5 +430,12 @@
 </script>
 
 <template>
-  <div ref="editorContainer" class="w-full h-full"></div>
+  <div ref="editorContainer" class="w-full h-full">
+    <ToastAlert
+      :key="new Date().getTime()"
+      v-if="errorAiCompletion"
+      title="AI Completions Error"
+      :message="errorAiCompletion"
+    />
+  </div>
 </template>

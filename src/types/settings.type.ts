@@ -11,4 +11,13 @@ export interface Settings {
   stackedDump: string
   windowWidth: number
   windowHeight: number
+  intelephenseLicenseKey?: string
+  aiStatus: boolean
+  aiProvider: string
+  aiModelId: string
+  aiApiKey: string
+  aiPromptTemplateGenerateCodeFromComment: string
+  aiPromptTemplateCompleteComment: string
+  aiPromptTemplateCompleteCode: string
+  navigationDisplay?: string
 }

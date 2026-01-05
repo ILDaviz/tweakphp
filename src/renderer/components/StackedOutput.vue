@@ -24,6 +24,7 @@
 
   const applyDump = async () => {
     await nextTick()
+    console.log(props.output)
     props.output.forEach(item => {
       const el = document.getElementById(`dump-${item.line}`)?.querySelector('.sf-dump')
       if (el) {
