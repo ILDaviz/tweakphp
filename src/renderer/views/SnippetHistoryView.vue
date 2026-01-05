@@ -22,12 +22,9 @@
   }>()
 
   const loadingEdit = ref<boolean>(false)
-  const confirmDelete = refAutoReset<boolean>(false, 5000) // Reset after 5 seconds
-
   const errorResponse = ref<string>('')
   const snippetSelected = ref<Snippet | null>(null)
   const searchQuery = ref<string>('')
-  const enableEditMode = ref<boolean>(false)
   const snippetName = ref('')
   const snippetTags = ref<string[]>([])
   const snippetCode = ref<string>('')
@@ -77,8 +74,6 @@
 
   const selectedSnippet = () => {
     if (!snippetSelected.value) return
-    enableEditMode.value = false
-    confirmDelete.value = false
     snippetName.value = snippetSelected.value.name
     snippetTags.value = snippetSelected.value.tags || []
     snippetCode.value = snippetSelected.value.code
@@ -104,13 +99,6 @@
   const handleDelete = () => {
     if (!snippetSelected.value) return
 
-    if (!confirmDelete.value) {
-      confirmDelete.value = true
-      return
-    }
-
-    enableEditMode.value = false
-    confirmDelete.value = false
     window.ipcRenderer.send('delete-snippet', snippetSelected.value.id)
     window.ipcRenderer.on('delete-snippet.reply', response => {
       if (response.error) {
@@ -128,9 +116,11 @@
     if (!snippetSelected.value) return
     if (!tabsStore.current) return
 
-    events.dispatchEvent(new CustomEvent('insert-snippet', {
-      detail: snippetSelected.value.code
-    }));
+    events.dispatchEvent(
+      new CustomEvent('insert-snippet', {
+        detail: snippetSelected.value.code,
+      })
+    )
 
     emit('selected', snippetSelected.value)
   }
@@ -146,11 +136,6 @@
 
   const editOrSaveSnippet = () => {
     if (!snippetSelected.value) return
-
-    if (!enableEditMode.value) {
-      enableEditMode.value = true
-      return
-    }
 
     loadingEdit.value = true
 
@@ -174,7 +159,6 @@
     window.ipcRenderer.on('update-snippet.reply', response => {
       if (response.error) {
         loadingEdit.value = false
-        enableEditMode.value = false
         console.error('Error updating snippet:', response.error)
         errorResponse.value = response.error
         return
@@ -184,7 +168,6 @@
       )
       snippetSelected.value = result.data as Snippet
       loadingEdit.value = false
-      enableEditMode.value = false
     })
   }
 </script>
@@ -268,21 +251,18 @@
           </p>
         </div>
       </pane>
-      <Pane class="!h-auto">
+      <Pane class="!h-auto px-2">
         <div v-if="snippetSelected">
           <div class="p-2 flex flex-col gap-4">
             <div class="flex justify-between items-center">
               <h2 class="text-lg font-semibold my-2">
-                <template v-if="!enableEditMode">
-                  <span class="text-gray-500">Show:</span> {{ snippetSelected.name }}
-                </template>
-                <template v-else> <span class="text-gray-500">Editing:</span> {{ snippetName }} </template>
+                <template> <span class="text-gray-500">Show:</span> {{ snippetSelected.name }} </template>
               </h2>
             </div>
           </div>
 
-          <div v-if="snippetSelected && enableEditMode" class="py-2 px-2 mb-2">
-            <div class="grid grid-cols-1 gap-4 items-center px-1">
+          <div v-if="snippetSelected" class="py-2 mb-2">
+            <div class="grid grid-cols-1 gap-4 items-center">
               <TextInput v-model="snippetName" id="snippet_name" placeholder="Snippet name" />
               <TagsInput
                 v-model="snippetTags"
@@ -292,22 +272,8 @@
             </div>
           </div>
 
-          <div
-          class="rounded overflow-hidden border-2 border-gray-500/20"
-          >
+          <div class="rounded overflow-hidden border-2 border-gray-500/20">
             <Editor
-              v-if="!enableEditMode"
-              ref="snippetShow"
-              class="min-h-[300px] h-full w-full p-2"
-              :key="`snippet-show-${snippetSelected.id + Date.now()}`"
-              :editor-id="`snippet-show-${snippetSelected.id + Date.now()}`"
-              language="output"
-              :value="snippetCode"
-              readonly
-              :wrap="true"
-            />
-            <Editor
-              v-else
               ref="snippetEdit"
               class="min-h-[300px] h-full w-full"
               :key="`snippet-edit-${snippetSelected.id}`"
@@ -325,18 +291,33 @@
           </div>
 
           <div class="flex items-center justify-between mt-2">
-            <PrimaryButton @click="handleDelete" class="flex items-center gap-1">
-              <span v-if="!confirmDelete">Delete</span>
-              <span v-else> Are you sure? </span>
-            </PrimaryButton>
+            <ModalAdvance @submit="handleDelete" :with-secondary-confirm-modal="true">
+              <template #labelPrimaryButton>
+                <span>Delete</span>
+              </template>
+              <template #labelPrimaryButtonSecondModal>
+                <span>Confirm Delete</span>
+              </template>
+              <template #labelCloseSecondModal>
+                <span>Cancel</span>
+              </template>
+              <template #firstModalContent>
+                <p class="text-sm opacity-80 mb-5">
+                  You are sure you want to delete this snippet?
+                  <b>This action cannot be undone.</b>
+                </p>
+              </template>
+              <template #secondModalContent>
+                <p class="text-sm opacity-80">
+                  You are sure you want to delete this snippet? This action cannot be undone.
+                </p>
+              </template>
+            </ModalAdvance>
             <div class="flex justify-center gap-2 items-center">
               <PrimaryButton @click="editOrSaveSnippet" class="flex items-center gap-1">
-                <span>{{ enableEditMode ? 'Save' : 'Edit' }}</span>
+                <span>Update</span>
               </PrimaryButton>
-              <div
-                v-if="!enableEditMode"
-                class="flex justify-center gap-2 items-center"
-              >
+              <div class="flex justify-center gap-2 items-center">
                 <PrimaryButton @click="handleUse">
                   <div class="flex items-center gap-1">
                     <span> Add </span>
@@ -358,7 +339,6 @@
         </div>
       </Pane>
     </Splitpanes>
-    <ModalAdvance />
   </Container>
 </template>
 

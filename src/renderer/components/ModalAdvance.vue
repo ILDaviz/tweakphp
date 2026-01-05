@@ -4,6 +4,16 @@
   import PrimaryButton from '../components/PrimaryButton.vue'
   import SecondaryButton from '../components/SecondaryButton.vue'
 
+  withDefaults(defineProps<{
+    withSecondaryConfirmModal?: boolean
+  }>(), {
+    withSecondaryConfirmModal: false
+  });
+
+  defineEmits<{
+    'submit': void
+  }>();
+
   const firstModal = ref()
   const secondModal = ref()
 </script>
@@ -11,32 +21,47 @@
 <template>
   <div>
     <PrimaryButton @click="firstModal.openModal()">
-      Apri Dialog
+      <slot name="labelPrimaryButton">
+        Label Primary Button
+      </slot>
     </PrimaryButton>
 
     <Modal ref="firstModal" title="Impostazioni Avanzate">
-      <p class="text-sm opacity-80 mb-5">
-        Sei sicuro di voler modificare queste impostazioni?
-        <b>Queste modifiche potrebbero influire sul funzionamento dell'applicazione.</b>
-      </p>
-
+      <slot name="firstModalContent">
+        First Modal Content
+      </slot>
       <div class="mt-6 flex justify-end space-x-3">
         <SecondaryButton @click="firstModal.closeModal()">
-          Chiudi
+          <slot name="labelSecondaryButton">
+            Close
+          </slot>
         </SecondaryButton>
-        <PrimaryButton @click="secondModal.openModal()">
-          Elimina questo snippet
+        <PrimaryButton
+          v-if="withSecondaryConfirmModal"
+          @click="secondModal.openModal()">
+          <slot name="labelPrimaryButtonSecondModal">
+            Open Second Modal
+          </slot>
+        </PrimaryButton>
+        <PrimaryButton
+          v-else
+          @click="$emit('submit'); firstModal.closeModal()">
+          <slot name="labelPrimaryButtonOnlyFirstModal">
+            Confirm
+          </slot>
         </PrimaryButton>
       </div>
     </Modal>
 
     <Modal ref="secondModal" title="Secondo Dialog">
-      <p class="text-sm opacity-80 mb-5">
-        Fatto! Hai aperto il secondo dialog!
-      </p>
+      <slot name="secondModalContent">
+        Second Modal Content
+      </slot>
       <div class="flex justify-end">
-        <SecondaryButton @click="secondModal.closeModal()">
-          Chiudi
+        <SecondaryButton @click="$emit('submit'); firstModal.closeModal()">
+          <slot name="labelCloseSecondModal">
+            Close
+          </slot>
         </SecondaryButton>
       </div>
     </Modal>
