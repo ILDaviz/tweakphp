@@ -246,15 +246,20 @@
 </script>
 
 <template>
-  <Splitpanes class="h-full gap-4">
-    <pane class="!h-full">
+  <Splitpanes
+    class="h-full gap-4 pb-6 default-theme"
+  >
+    <pane
+      size="30"
+      class="!h-full min-w-[400px] p-2 rounded-md border-2 border-gray-500/20"
+    >
       <div class="flex flex-col gap-4 ml-0.5 mr-2 py-4">
         <div class="flex items-center gap-2">
           <div class="relative w-full">
-            <TextInput v-model="searchQuery" id="search" class="w-full" placeholder="Search snippets..." />
+            <TextInput v-model="searchQuery" id="search" class="w-full border-2 border-gray-500/20" placeholder="Search snippets..." />
             <button
               v-if="searchQuery.length > 0"
-              class="absolute right-2 top-1/2 transform -translate-y-1/2 size-7"
+              class="absolute -right-1 top-1/2 transform -translate-y-1/2 size-7"
               @click="searchQuery = ''"
             >
               <svg
@@ -273,43 +278,59 @@
               </svg>
             </button>
           </div>
-          <button
-            class="p-2 bg-primary-600 hover:bg-primary-700 text-white rounded transition-colors"
-            @click="handleCreate"
-            title="Create New Snippet"
-          >
-            <PlusCircleIcon class="w-5 h-5" />
-          </button>
         </div>
         <Divider />
       </div>
       <div class="h-full max-h-[400px] flex flex-col">
         <div class="h-full overflow-y-auto pr-2 custom-scrollbar">
           <div class="flex flex-col gap-2">
-            <button
+            <div
               v-for="snippet in snippets"
               :key="snippet.id"
-              class="flex items-center justify-between p-1 gap-2 w-full my-0.5 ml-0.5 border-2 border-gray-500 hover:border-gray-400 cursor-pointer rounded transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              class="relative flex items-center justify-between p-1 gap-2 w-full my-0.5 ml-0.5 border-2 border-gray-500 hover:border-gray-400 cursor-pointer rounded transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               :class="[
                   snippetSelected?.id === snippet.id
                     ? 'bg-primary-900/10 outline-none ring-2 ring-primary-500 border-transparent'
                     : '',
                 ]"
-              @click="handleClick(snippet)"
             >
+              <button
+                @click="handleClick(snippet)"
+                class="w-full h-full"
+              >
                 <span class="flex flex-col items-start justify-start gap-1 text-start max-w-1/2">
                   <span :class="[snippetSelected?.id === snippet.id ? 'text-primary-600' : '']">
                     {{ snippet.name }}
                   </span>
-                  <span
-                    v-if="snippet?.tags && snippet.tags.length > 0"
-                    class="shrink-0 text-xs text-gray-400 bg-gray-600 px-1 rounded"
-                    :class="[snippetSelected?.id === snippet.id ? 'bg-primary-900/40 text-primary-600' : '']"
-                  >
-                    {{ snippet.tags.join(', ') }}
-                  </span>
                 </span>
-            </button>
+              </button>
+              <ModalAdvance
+                @submit="handleDelete"
+                v-if="snippetSelected?.id === snippet.id"
+                :with-secondary-confirm-modal="true"
+              >
+                <template #labelPrimaryButton>
+                  <span>Delete</span>
+                </template>
+                <template #labelPrimaryButtonSecondModal>
+                  <span>Confirm Delete</span>
+                </template>
+                <template #labelCloseSecondModal>
+                  <span>Cancel</span>
+                </template>
+                <template #firstModalContent>
+                  <p class="text-sm opacity-80 mb-5">
+                    You are sure you want to delete this snippet?
+                    <b>This action cannot be undone.</b>
+                  </p>
+                </template>
+                <template #secondModalContent>
+                  <p class="text-sm opacity-80">
+                    You are sure you want to delete this snippet? This action cannot be undone.
+                  </p>
+                </template>
+              </ModalAdvance>
+            </div>
           </div>
         </div>
         <p v-if="snippets.length > 0" class="text-sm text-gray-500 pt-2">
@@ -317,32 +338,21 @@
         </p>
       </div>
     </pane>
-    <Pane class="!h-auto px-2">
+    <Pane class="!h-auto min-w-[400px] p-2 rounded-md border-2 border-gray-500/20" size="70">
       <div v-if="snippetSelected || isCreating">
         <div class="p-2 flex flex-col gap-4">
           <div class="flex justify-between items-center">
             <h2 class="text-lg font-semibold my-2">
-              <template v-if="isCreating"> <span class="text-gray-500">Create New Snippet</span> </template>
-              <template v-else> <span class="text-gray-500">Edit:</span> {{ snippetSelected?.name }} </template>
+              <template v-if="isCreating"> <span class="text-white">Create New Snippet</span> </template>
+              <template v-else> <span class="text-white">Edit:</span> {{ snippetSelected?.name }} </template>
             </h2>
-          </div>
-        </div>
-
-        <div class="py-2 mb-2">
-          <div class="grid grid-cols-1 gap-4 items-center">
-            <TextInput v-model="snippetName" id="snippet_name" placeholder="Snippet name" />
-            <TagsInput
-              v-model="snippetTags"
-              id="tag_input"
-              placeholder="Snippet tags (Enter to add, comma to separate)"
-            />
           </div>
         </div>
 
         <div class="rounded overflow-hidden border-2 border-gray-500/20">
           <Editor
             ref="snippetEdit"
-            class="min-h-[300px] h-full w-full"
+            class="min-h-[300px] h-full w-full rounded"
             :key="`snippet-edit-${snippetSelected?.id || 'new'}`"
             :editor-id="`snippet-edit-${snippetSelected?.id || 'new'}`"
             v-model:value="snippetCode"
@@ -353,41 +363,19 @@
           />
         </div>
 
+        <div class="py-2 mb-2">
+          <div class="grid grid-cols-1 gap-4 items-center">
+            <TextInput v-model="snippetName" id="snippet_name" placeholder="Snippet name" />
+          </div>
+        </div>
+
         <div v-if="errorResponse" class="mt-2">
           <span v-text="errorResponse" class="text-xs text-red-500"></span>
         </div>
 
-        <div class="flex items-center justify-between mt-2">
-          <!-- Delete Button (Only for existing snippets) -->
-          <ModalAdvance
-            v-if="!isCreating && snippetSelected"
-            @submit="handleDelete"
-            :with-secondary-confirm-modal="true"
-          >
-            <template #labelPrimaryButton>
-              <span>Delete</span>
-            </template>
-            <template #labelPrimaryButtonSecondModal>
-              <span>Confirm Delete</span>
-            </template>
-            <template #labelCloseSecondModal>
-              <span>Cancel</span>
-            </template>
-            <template #firstModalContent>
-              <p class="text-sm opacity-80 mb-5">
-                You are sure you want to delete this snippet?
-                <b>This action cannot be undone.</b>
-              </p>
-            </template>
-            <template #secondModalContent>
-              <p class="text-sm opacity-80">
-                You are sure you want to delete this snippet? This action cannot be undone.
-              </p>
-            </template>
-          </ModalAdvance>
-          <div v-else></div>
-          <!-- Spacer -->
+        <Divider class="my-4" />
 
+        <div class="flex items-center justify-between mt-2">
           <div class="flex justify-center gap-2 items-center">
             <PrimaryButton
               @click="isCreating ? saveSnippet() : updateSnippet()"
@@ -405,7 +393,7 @@
             <div v-if="!isCreating" class="flex justify-center gap-2 items-center">
               <PrimaryButton @click="handleUse">
                 <div class="flex items-center gap-1">
-                  <span> Add </span>
+                  <span> Use this snippet </span>
                 </div>
               </PrimaryButton>
             </div>
@@ -414,7 +402,7 @@
       </div>
       <div v-else class="flex items-center justify-center p-10 h-full text-center">
         <div class="flex flex-col items-center gap-4">
-          <p v-if="snippets.length > 0" class="text-sm text-gray-500">
+          <p v-if="snippets.length > 0" class="text-sm text-white">
             Select a snippet from the list to view or edit.
           </p>
           <p v-else class="text-sm text-gray-500">No snippets available. Create one by clicking the "+" button.</p>
