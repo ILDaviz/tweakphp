@@ -26,7 +26,6 @@
 
   import Divider from './Divider.vue'
   import { useRouter } from 'vue-router'
-  import SnippetSaveView from '../views/SnippetSaveView.vue'
   import SnippetHistoryView from '../views/SnippetHistoryView.vue'
   import BookmarkIcon from '@/components/icons/BookmarkIcon.vue'
 
@@ -39,7 +38,6 @@
   const snippetStore = useSnippetStore()
   const router = useRouter()
   const dockerModal = ref()
-  const snippetSaveModal = ref()
   const snippetHistoryModal = ref()
   const historyModal = ref()
   const sshModal = ref()
@@ -53,16 +51,10 @@
     () => snippetStore.showModal,
     show => {
       if (show) {
-        snippetSaveModal.value?.openModal()
-      } else {
-        snippetSaveModal.value?.closeModal()
+        snippetHistoryModal.value?.openModal()
       }
     }
   )
-
-  function closeSnippetSaveModal() {
-    snippetStore.modalClosed()
-  }
 
   onMounted(() => {
     events.addEventListener('client.connect.reply', connectReply)
@@ -412,10 +404,7 @@
     <Modal title="Connect to Kubernetes" ref="kubectlModal" size="2xl">
       <KubectlView @connected="kubectlConnected($event)" @removed="kubectlRemoved($event)" />
     </Modal>
-    <Modal title="Save snippet" ref="snippetSaveModal" size="xl" @close="closeSnippetSaveModal">
-      <SnippetSaveView @saved="closeSnippetSaveModal" />
-    </Modal>
-    <Modal title="Snippets" ref="snippetHistoryModal" size="5xl">
+    <Modal title="Snippets" ref="snippetHistoryModal" size="max" @close="snippetStore.modalClosed()" resizable>
       <SnippetHistoryView @selected="snippetHistoryModal.closeModal()" />
     </Modal>
   </div>

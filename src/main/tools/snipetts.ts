@@ -86,13 +86,7 @@ export async function initSnippet() {
         return
       }
 
-      updateSnippetSql.run(
-        snippet.name,
-        snippet.code,
-        JSON.stringify(snippet.tags || []),
-        updatedAt,
-        snippet.id
-      )
+      updateSnippetSql.run(snippet.name, snippet.code, JSON.stringify(snippet.tags || []), updatedAt, snippet.id)
 
       event.reply('update-snippet.reply', {
         data: snippet,

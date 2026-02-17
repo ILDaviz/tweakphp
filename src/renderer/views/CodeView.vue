@@ -187,9 +187,9 @@
   }
 
   const handleInsertSnippet = (event: any) => {
-    const snippetCode = event.detail;
+    const snippetCode = event.detail
     if (codeEditor.value && snippetCode) {
-      codeEditor.value.insertSnippet(snippetCode);
+      codeEditor.value.insertSnippet(snippetCode)
     }
   }
 

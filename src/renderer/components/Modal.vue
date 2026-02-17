@@ -69,6 +69,7 @@
                   'max-w-3xl': props.size === '3xl',
                   'max-w-4xl': props.size === '4xl',
                   'max-w-5xl': props.size === '5xl',
+                  'max-w-6xl': props.size === '6xl',
                 }"
                 :style="{
                   backgroundColor: settingsStore.colors.background,
