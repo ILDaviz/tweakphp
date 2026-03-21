@@ -187,10 +187,21 @@
   }
 
   const handleInsertSnippet = (event: any) => {
-    const snippetCode = event.detail
-    if (codeEditor.value && snippetCode) {
-      codeEditor.value.insertSnippet(snippetCode)
+    const detail = event.detail
+
+    // Backward compatible: older emitters send just the snippet code string.
+    const snippetCode = typeof detail === 'string' ? detail : detail?.code
+    const mode = typeof detail === 'string' ? 'cursor' : detail?.mode || 'cursor'
+
+    if (!codeEditor.value || !snippetCode) return
+
+    if (mode === 'replace') {
+      codeEditor.value.updateValue(snippetCode)
+      codeEditor.value.focusEditor()
+      return
     }
+
+    codeEditor.value.insertSnippet(snippetCode)
   }
 
   onMounted(async () => {
@@ -203,7 +214,7 @@
 
     if (settingsStore.settings.php === '') {
       await router.push({ name: 'settings' })
-      alert('PHP path is not set!')
+      console.warn('PHP path is not set.')
       return
     }
     let params: any = route.params

@@ -3,15 +3,27 @@ import { db } from '../db/db_manager'
 import { Snippet } from '../../types/snippet.type.ts'
 import { z } from 'zod'
 
+type SortBy = 'last_used_at' | 'updated_at' | 'created_at'
+type SortDir = 'asc' | 'desc'
+
+type LoadSnippetsPayload = {
+  filter?: string | null
+  sortBy?: SortBy
+  sortDir?: SortDir
+}
+
+const sortBySchema = z.enum(['last_used_at', 'updated_at', 'created_at'])
+const sortDirSchema = z.enum(['asc', 'desc'])
+
 export async function initSnippet() {
   ipcMain.on(
     'snippet-saved',
-    (event: IpcMainEvent, snippet: Partial<Omit<Snippet, 'id' | 'created_at' | 'updated_at'>>) => {
+    (event: IpcMainEvent, snippet: Partial<Omit<Snippet, 'id' | 'created_at' | 'updated_at' | 'last_used_at'>>) => {
       try {
         const createdAt = new Date().toISOString()
         const saveSnippetSql = db.prepare(`
-            INSERT INTO snippets (name,code,tags,created_at,updated_at)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO snippets (name,code,tags,created_at,updated_at,last_used_at)
+            VALUES (?, ?, ?, ?, ?, ?)
           `)
 
         const snippetSchema = z.object({
@@ -35,7 +47,8 @@ export async function initSnippet() {
           snippet.code || '',
           JSON.stringify(snippet.tags || []),
           createdAt,
-          createdAt
+          createdAt,
+          null
         )
 
         const newSnippet: Snippet = {
@@ -45,6 +58,7 @@ export async function initSnippet() {
           tags: snippet.tags ?? [],
           created_at: createdAt,
           updated_at: createdAt,
+          last_used_at: null,
         }
         event.reply('snippet-saved.reply', {
           data: newSnippet,
@@ -63,6 +77,11 @@ export async function initSnippet() {
   ipcMain.on('update-snippet', (event: IpcMainEvent, snippet: Partial<Omit<Snippet, 'created_at'>>) => {
     try {
       const updatedAt = new Date().toISOString()
+      const getSnippetSql = db.prepare(`
+          SELECT created_at, last_used_at
+          FROM snippets
+          WHERE id = ?
+        `)
       const updateSnippetSql = db.prepare(`
           UPDATE snippets
           SET name = ?, code = ?, tags = ?, updated_at = ?
@@ -80,16 +99,27 @@ export async function initSnippet() {
 
       if (!parsedSnippet.success) {
         console.error('Validation failed:', parsedSnippet.error)
-        event.reply('snippet-saved.reply', {
+        event.reply('update-snippet.reply', {
           error: parsedSnippet.error.errors.map(e => e.message).join(', '),
         })
         return
       }
 
+      const previousSnippet = getSnippetSql.get(snippet.id) as { created_at?: string; last_used_at?: string | null }
       updateSnippetSql.run(snippet.name, snippet.code, JSON.stringify(snippet.tags || []), updatedAt, snippet.id)
 
+      const updatedSnippet: Snippet = {
+        id: snippet.id as number,
+        name: snippet.name as string,
+        code: snippet.code as string,
+        tags: snippet.tags ?? [],
+        created_at: previousSnippet?.created_at || updatedAt,
+        updated_at: updatedAt,
+        last_used_at: previousSnippet?.last_used_at ?? null,
+      }
+
       event.reply('update-snippet.reply', {
-        data: snippet,
+        data: updatedSnippet,
         error: null,
       })
     } catch (error) {
@@ -101,20 +131,78 @@ export async function initSnippet() {
     }
   })
 
-  ipcMain.on('load-snippets', (event: IpcMainEvent, filter: string | number | null = null) => {
+  ipcMain.on('snippet-used', (event: IpcMainEvent, id: number) => {
     try {
-      console.log('Loading snippets with filter:', filter)
+      const payload = z.object({
+        id: z.number().int().positive('ID must be a positive integer'),
+      })
 
-      let query = 'SELECT * FROM snippets WHERE 1=1' // Trick to always have a WHERE clause
+      const parsed = payload.safeParse({ id })
+      if (!parsed.success) {
+        event.reply('snippet-used.reply', {
+          data: null,
+          error: parsed.error.errors.map(e => e.message).join(', '),
+        })
+        return
+      }
+
+      const usedAt = new Date().toISOString()
+      const markUsedSql = db.prepare(`
+        UPDATE snippets
+        SET last_used_at = ?
+        WHERE id = ?
+      `)
+      markUsedSql.run(usedAt, id)
+
+      event.reply('snippet-used.reply', {
+        data: { id, last_used_at: usedAt },
+        error: null,
+      })
+    } catch (error) {
+      console.error('Failed to mark snippet as used:', error)
+      event.reply('snippet-used.reply', {
+        data: null,
+        error: 'Failed to mark snippet as used',
+      })
+    }
+  })
+
+  ipcMain.on('load-snippets', (event: IpcMainEvent, payload: string | number | null | LoadSnippetsPayload = null) => {
+    try {
+      let filter: string | null = null
+      let sortBy: SortBy = 'last_used_at'
+      let sortDir: SortDir = 'desc'
+
+      if (typeof payload === 'string' || typeof payload === 'number') {
+        filter = String(payload)
+      } else if (payload && typeof payload === 'object') {
+        filter = typeof payload.filter === 'string' ? payload.filter : null
+        const parsedSortBy = sortBySchema.safeParse(payload.sortBy)
+        const parsedSortDir = sortDirSchema.safeParse(payload.sortDir)
+        sortBy = parsedSortBy.success ? parsedSortBy.data : 'last_used_at'
+        sortDir = parsedSortDir.success ? parsedSortDir.data : 'desc'
+      }
+
+      console.log('Loading snippets with payload:', { filter, sortBy, sortDir })
+
+      let query = 'SELECT * FROM snippets WHERE 1=1'
       const params: any = {}
 
       if (filter) {
-        query += ' AND name LIKE @name COLLATE NOCASE'
+        query +=
+          ' AND (name LIKE @name COLLATE NOCASE OR tags LIKE @tags COLLATE NOCASE OR code LIKE @code COLLATE NOCASE)'
         params.name = `%${filter}%`
-        query += ' OR tags LIKE @tags COLLATE NOCASE'
         params.tags = `%${filter}%`
-        query += ' OR code LIKE @code COLLATE NOCASE'
         params.code = `%${filter}%`
+      }
+
+      const direction = sortDir === 'asc' ? 'ASC' : 'DESC'
+      if (sortBy === 'last_used_at') {
+        query += ` ORDER BY last_used_at IS NULL ASC, last_used_at ${direction}`
+      } else if (sortBy === 'updated_at') {
+        query += ` ORDER BY updated_at ${direction}`
+      } else {
+        query += ` ORDER BY created_at ${direction}`
       }
 
       const listSnippetSql = db.prepare(query).all(params)
@@ -125,6 +213,8 @@ export async function initSnippet() {
           code: row.code,
           tags: row.tags ? JSON.parse(row.tags) : [],
           created_at: row.created_at,
+          updated_at: row.updated_at,
+          last_used_at: row.last_used_at ?? null,
         })) as Snippet[],
         error: null,
       })

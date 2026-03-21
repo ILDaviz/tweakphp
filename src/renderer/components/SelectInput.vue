@@ -41,7 +41,7 @@
         outlineColor: settingsStore.colors.border,
       }"
     >
-      <option value="" selected disabled>
+      <option v-if="placeholder" value="" disabled>
         {{ placeholder }}
       </option>
       <slot></slot>

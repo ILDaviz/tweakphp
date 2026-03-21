@@ -404,7 +404,14 @@
     <Modal title="Connect to Kubernetes" ref="kubectlModal" size="2xl">
       <KubectlView @connected="kubectlConnected($event)" @removed="kubectlRemoved($event)" />
     </Modal>
-    <Modal title="Snippets" ref="snippetHistoryModal" size="max" @close="snippetStore.modalClosed()" resizable>
+    <Modal
+      title="Snippets"
+      ref="snippetHistoryModal"
+      size="max"
+      variant="snippet"
+      @close="snippetStore.modalClosed()"
+      resizable
+    >
       <SnippetHistoryView @selected="snippetHistoryModal.closeModal()" />
     </Modal>
   </div>
