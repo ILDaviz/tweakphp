@@ -22,8 +22,6 @@ buildSync({
   minify: process.argv[2] !== '--dev',
 })
 
-copySync('node_modules/better-sqlite3/build/Release/better_sqlite3.node', 'build/better_sqlite3.node')
-
 buildSync({
   entryPoints: ['src/preload/preload.ts'],
   outfile: 'dist/preload.js',
