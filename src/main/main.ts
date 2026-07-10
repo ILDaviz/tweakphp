@@ -14,7 +14,7 @@ import * as tray from './system/tray.ts'
 
 import { runMigrations } from './db/migration.ts'
 import { initCodeHistory } from './tools/code-history.ts'
-import { initSnippet } from './tools/snipetts.ts'
+import { initSnippet } from './tools/snippets.ts'
 
 import url from 'url'
 

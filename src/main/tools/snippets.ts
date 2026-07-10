@@ -183,8 +183,6 @@ export async function initSnippet() {
         sortDir = parsedSortDir.success ? parsedSortDir.data : 'desc'
       }
 
-      console.log('Loading snippets with payload:', { filter, sortBy, sortDir })
-
       let query = 'SELECT * FROM snippets WHERE 1=1'
       const params: any = {}
 
@@ -237,7 +235,7 @@ export async function initSnippet() {
 
       if (!parsedSnippet.success) {
         console.error('Validation failed:', parsedSnippet.error)
-        event.reply('snippet-saved.reply', {
+        event.reply('delete-snippet.reply', {
           error: parsedSnippet.error.errors.map(e => e.message).join(', '),
         })
         return

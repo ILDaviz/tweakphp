@@ -39,7 +39,6 @@
   const router = useRouter()
   const dockerModal = ref()
   const snippetHistoryModal = ref()
-  const historyModal = ref()
   const sshModal = ref()
   const kubectlModal = ref()
   const tab: ComputedRef<Tab | null> = computed(() => tabStore.getCurrent())

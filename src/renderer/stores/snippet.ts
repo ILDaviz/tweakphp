@@ -18,7 +18,6 @@ export const useSnippetStore = defineStore('snippet', () => {
     if (code.value) {
       return code.value
     }
-    console.warn('No code available in snippet modal')
     return ''
   }
 

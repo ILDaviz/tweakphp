@@ -16,13 +16,20 @@
 
   const localModelValue = ref<string[]>(props.modelValue || [])
 
-  watch(props.modelValue, (newValue: string[]) => {
-    localModelValue.value = newValue
-  })
+  watch(
+    () => props.modelValue,
+    (newValue: string[] | undefined) => {
+      localModelValue.value = newValue || []
+    }
+  )
 
-  watch(localModelValue, (newValue: string[]) => {
-    emit('update:modelValue', newValue)
-  })
+  watch(
+    () => localModelValue.value,
+    (newValue: string[]) => {
+      emit('update:modelValue', newValue)
+    },
+    { deep: true }
+  )
 </script>
 
 <template>

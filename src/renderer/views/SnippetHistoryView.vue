@@ -173,7 +173,6 @@
 
   onBeforeUnmount(() => {
     window.ipcRenderer.removeListener('load-snippets.reply', handleLoadedSnippets)
-    window.ipcRenderer.removeListener('update-snippet.reply', () => {})
     window.ipcRenderer.removeListener('snippet-saved.reply', saveSnippetReply)
     window.removeEventListener('keydown', handleGlobalShortcuts)
     if (searchDebounceTimeout.value) {
@@ -185,18 +184,21 @@
   const handleDelete = () => {
     if (!snippetSelected.value) return
 
-    window.ipcRenderer.send('delete-snippet', snippetSelected.value.id)
-    window.ipcRenderer.on('delete-snippet.reply', response => {
+    const deletingId = snippetSelected.value.id
+
+    window.ipcRenderer.once('delete-snippet.reply', response => {
       if (response.error) {
         console.error('Error deleting snippet:', response.error)
         errorResponse.value = response.error
         return
       }
 
-      snippets.value = snippets.value.filter(snippet => snippet.id !== snippetSelected.value?.id)
+      snippets.value = snippets.value.filter(snippet => snippet.id !== deletingId)
       snippetSelected.value = null
       deleteSnippetModal.value?.closeModal()
     })
+
+    window.ipcRenderer.send('delete-snippet', deletingId)
   }
 
   const openDeleteModal = () => {
@@ -274,8 +276,7 @@
       return
     }
 
-    window.ipcRenderer.send('update-snippet', result.data)
-    window.ipcRenderer.on('update-snippet.reply', response => {
+    window.ipcRenderer.once('update-snippet.reply', response => {
       if (response.error) {
         loadingEdit.value = false
         console.error('Error updating snippet:', response.error)
@@ -289,6 +290,8 @@
       fieldErrors.value = {}
       loadingEdit.value = false
     })
+
+    window.ipcRenderer.send('update-snippet', result.data)
   }
 
   const saveSnippet = () => {
